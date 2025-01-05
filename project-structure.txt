@@ -1,0 +1,29 @@
+.
+├── README.md
+├── app
+│   ├── build.gradle.kts
+│   └── src
+│       ├── main
+│       │   ├── java
+│       │   │   └── org
+│       │   │       └── example
+│       │   │           └── App.java
+│       │   └── resources
+│       └── test
+│           ├── java
+│           │   └── org
+│           │       └── example
+│           │           └── AppTest.java
+│           └── resources
+├── gradle
+│   ├── libs.versions.toml
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── gradle.properties
+├── gradlew
+├── gradlew.bat
+├── project-structure.txt
+└── settings.gradle.kts
+
+15 directories, 12 files
