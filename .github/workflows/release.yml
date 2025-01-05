@@ -41,21 +41,21 @@ jobs:
         run: ./gradlew nativeCompile
 
       - name: List Generated Files
-        run: ls -R build/native/nativeCompile/
+        run: ls -R app/build/native/nativeCompile/
 
       - name: Upload artifact (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v3
         with:
           name: sqlift-windows-x64.exe
-          path: build/native/nativeCompile/sqlift-windows-x64.exe
+          path: app/build/native/nativeCompile/sqlift-windows-x64.exe
 
       - name: Upload artifact (Linux/MacOS)
         if: runner.os != 'Windows'
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.output_name }}
-          path: build/native/nativeCompile/${{ matrix.output_name }}
+          path: app/build/native/nativeCompile/${{ matrix.output_name }}
 
   release:
     needs: build

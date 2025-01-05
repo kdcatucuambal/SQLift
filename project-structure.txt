@@ -5,15 +5,49 @@
 │   └── src
 │       ├── main
 │       │   ├── java
-│       │   │   └── org
-│       │   │       └── example
-│       │   │           └── App.java
+│       │   │   └── cl
+│       │   │       └── playground
+│       │   │           ├── cli
+│       │   │           │   ├── CommandLineApp.java
+│       │   │           │   └── commands
+│       │   │           │       ├── GenerateCommand.java
+│       │   │           │       └── InitCommand.java
+│       │   │           ├── config
+│       │   │           │   ├── model
+│       │   │           │   │   └── SqliftConfig.java
+│       │   │           │   ├── parser
+│       │   │           │   │   └── YamlParser.java
+│       │   │           │   └── reader
+│       │   │           │       └── YamlReader.java
+│       │   │           ├── core
+│       │   │           │   ├── engine
+│       │   │           │   │   ├── PostgresEngine.java
+│       │   │           │   │   └── SchemaProcessor.java
+│       │   │           │   ├── generator
+│       │   │           │   │   └── EntityGenerator.java
+│       │   │           │   ├── model
+│       │   │           │   │   ├── ColumnMetadata.java
+│       │   │           │   │   ├── RelationMetadata.java
+│       │   │           │   │   └── TableMetadata.java
+│       │   │           │   ├── reader
+│       │   │           │   │   └── SqlReader.java
+│       │   │           │   ├── types
+│       │   │           │   │   └── PostgreSQLToJavaType.java
+│       │   │           │   └── util
+│       │   │           │       └── TypeMapper.java
+│       │   │           ├── exception
+│       │   │           │   ├── ConfigurationException.java
+│       │   │           │   └── FileReadException.java
+│       │   │           └── util
+│       │   │               ├── LogContent.java
+│       │   │               └── Utils.java
 │       │   └── resources
 │       └── test
 │           ├── java
-│           │   └── org
-│           │       └── example
-│           │           └── AppTest.java
+│           │   └── cl
+│           │       └── playground
+│           │           └── cli
+│           │               └── CommandLineAppTest.java
 │           └── resources
 ├── gradle
 │   ├── libs.versions.toml
@@ -26,4 +60,4 @@
 ├── project-structure.txt
 └── settings.gradle.kts
 
-15 directories, 12 files
+31 directories, 30 files

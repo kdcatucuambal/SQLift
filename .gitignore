@@ -1,5 +1,24 @@
+# Ignore macOS system files
+.DS_Store
+
 # Ignore Gradle project-specific cache directory
-.gradle
+.gradle/
 
 # Ignore Gradle build output directory
-build
+build/
+
+# Ignore IntelliJ IDEA project files
+.idea/
+*.iml
+
+# Ignore logs
+*.log
+
+# Ignore compiled Java class files
+*.class
+
+# Ignore generated files from GraalVM native compilation
+build/native/
+
+# Ignore OS-specific files
+Thumbs.db
