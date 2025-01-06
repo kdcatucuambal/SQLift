@@ -43,12 +43,21 @@ jobs:
       - name: List Generated Files
         run: ls -R app/build/native/nativeCompile/
 
-      # Unificamos la lógica de subida de artefactos
+      - name: Rename binaries
+        shell: bash
+        run: |
+          cd app/build/native/nativeCompile/
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            mv sqlift.exe ${{ matrix.output_name }}.exe
+          else
+            mv sqlift ${{ matrix.output_name }}
+          fi
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.output_name }}
-          path: app/build/native/nativeCompile/*
+          path: app/build/native/nativeCompile/${{ matrix.output_name }}${{ runner.os == 'Windows' && '.exe' || '' }}
           if-no-files-found: error
 
   release:
@@ -67,9 +76,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/sqlift-linux-x64/*
-            artifacts/sqlift-macos-x64/*
-            artifacts/sqlift-macos-arm64/*
-            artifacts/sqlift-windows-x64.exe/*
+            artifacts/sqlift-linux-x64/sqlift-linux-x64
+            artifacts/sqlift-macos-x64/sqlift-macos-x64
+            artifacts/sqlift-macos-arm64/sqlift-macos-arm64
+            artifacts/sqlift-windows-x64/sqlift-windows-x64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
