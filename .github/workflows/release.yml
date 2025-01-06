@@ -43,19 +43,13 @@ jobs:
       - name: List Generated Files
         run: ls -R app/build/native/nativeCompile/
 
-      - name: Upload artifact (Windows)
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v3
-        with:
-          name: sqlift-windows-x64.exe
-          path: app/build/native/nativeCompile/sqlift-windows-x64.exe
-
-      - name: Upload artifact (Linux/MacOS)
-        if: runner.os != 'Windows'
+      # Unificamos la lógica de subida de artefactos
+      - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.output_name }}
-          path: app/build/native/nativeCompile/${{ matrix.output_name }}
+          path: app/build/native/nativeCompile/*
+          if-no-files-found: error
 
   release:
     needs: build
@@ -63,15 +57,19 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
       - name: List Downloaded Artifacts
-        run: ls -R
+        run: ls -R artifacts/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            sqlift-linux-x64/sqlift-linux-x64
-            sqlift-macos-x64/sqlift-macos-x64
-            sqlift-macos-arm64/sqlift-macos-arm64
-            sqlift-windows-x64.exe/sqlift-windows-x64.exe
+            artifacts/sqlift-linux-x64/*
+            artifacts/sqlift-macos-x64/*
+            artifacts/sqlift-macos-arm64/*
+            artifacts/sqlift-windows-x64.exe/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

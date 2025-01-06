@@ -42,3 +42,9 @@ git tag -d v1.0.0
 
 # Eliminar tag remoto
 git push origin :refs/tags/v1.0.0
+
+# Agregar tag local
+git tag -a v1.0.0 -m "First release with Gradle migration"
+
+# Agregar tag remoto
+git push origin v1.0.0
