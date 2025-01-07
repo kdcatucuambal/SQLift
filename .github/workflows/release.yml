@@ -8,8 +8,8 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, windows-2025, windows-2025, macos-13, macos-14 ]
         include:
           - os: ubuntu-24.04
             output_name: sqlift-linux-x64
@@ -21,9 +21,11 @@ jobs:
             output_name: sqlift-macos-arm64
           - os: windows-2025
             arch: x64
+            target: x64
             output_name: sqlift-windows-x64
           - os: windows-2025
             arch: arm64
+            target: aarch64
             output_name: sqlift-windows-arm64
             cross_compile: true
 
@@ -45,7 +47,8 @@ jobs:
 
       - name: Build Native Image (Standard)
         if: ${{ !matrix.cross_compile }}
-        run: ./gradlew nativeCompile
+        run: |
+          ./gradlew nativeCompile --info "-PnativeImageArgs=--target=${{ matrix.arch }}-windows"
 
       - name: Build Native Image (ARM64)
         if: ${{ matrix.cross_compile }}
@@ -53,8 +56,8 @@ jobs:
         run: |
           ./gradlew nativeCompile `
             --info `
-            "-Parch=arm64" `
-            "-PnativeImageArgs=--native-image-info,--target=windows-aarch64"
+            "-Parch=${{ matrix.arch }}" `
+            "-PnativeImageArgs=--target=${{ matrix.target }}-windows"
 
       - name: List Generated Files
         run: ls -R app/build/native/nativeCompile/
