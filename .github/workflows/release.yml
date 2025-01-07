@@ -49,10 +49,12 @@ jobs:
 
       - name: Build Native Image (ARM64)
         if: ${{ matrix.cross_compile }}
+        shell: powershell
         run: |
-          ./gradlew nativeCompile --info \
-          -Parch=arm64 \
-          -PnativeImageArgs="--native-image-info,--target=windows-aarch64"
+          ./gradlew nativeCompile `
+            --info `
+            "-Parch=arm64" `
+            "-PnativeImageArgs=--native-image-info,--target=windows-aarch64"
 
       - name: List Generated Files
         run: ls -R app/build/native/nativeCompile/
