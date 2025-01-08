@@ -18,10 +18,6 @@ repositories {
 }
 
 dependencies {
-    // PicoCLI dependency for creating command-line tools
-    implementation("info.picocli:picocli:4.7.5")
-    // PicoCLI annotation processor for code generation
-    annotationProcessor("info.picocli:picocli-codegen:4.7.5")
     // JUnit testing framework
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
@@ -39,15 +35,15 @@ application {
 }
 
 graalvmNative {
-    // Configuration for native compilation
     binaries {
         named("main") {
-            imageName.set("sqlift") // Native binary name
+            imageName.set("sqlift") // Nombre del binario nativo
             buildArgs.addAll(
-                "--no-fallback", // Do not generate fallback image based on JVM
-                "--enable-all-security-services", // Enable all security services
-                "--report-unsupported-elements-at-runtime" // Report unsupported elements at runtime
+                "--no-fallback",
+                "--report-unsupported-elements-at-runtime",
+                "-H:+PrintImageObjectTree"
             )
+
         }
     }
 }

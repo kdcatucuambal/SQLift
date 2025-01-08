@@ -2,22 +2,38 @@ package cl.playground.cli;
 
 import cl.playground.cli.commands.GenerateCommand;
 import cl.playground.cli.commands.InitCommand;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
 
-@Command(name = "sqlift", mixinStandardHelpOptions = true, version = "1.0", description = "Comandos para manejar archivos YAML de SQLift", subcommands = {
-        InitCommand.class,
-        GenerateCommand.class
-})
-public class CommandLineApp implements Runnable {
+public class CommandLineApp {
     public static void main(String[] args) {
-        int exitCode = new CommandLine(
-                new CommandLineApp()).execute(args);
-        System.exit(exitCode);
+        if (args.length == 0 || "--help".equals(args[0])) {
+            printHelp();
+            return;
+        }
+
+        switch (args[0]) {
+            case "--version":
+                printVersion();
+                break;
+            case "init":
+                new InitCommand().run();
+                break;
+            case "generate":
+                new GenerateCommand().run();
+                break;
+            default:
+                System.err.println("❌ Unknown command: " + args[0]);
+                printHelp();
+        }
     }
 
-    @Override
-    public void run() {
-        CommandLine.usage(this, System.out);
+    private static void printHelp() {
+        System.out.println("Usage:");
+        System.out.println("  sqlift --version       Show the tool's version");
+        System.out.println("  sqlift init            Initialize configuration files");
+        System.out.println("  sqlift generate        Generate Java entity classes from SQL schema");
+    }
+
+    private static void printVersion() {
+        System.out.println("Sqlift version 1.0.0");
     }
 }
