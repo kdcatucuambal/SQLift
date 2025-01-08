@@ -14,61 +14,100 @@ jobs:
           - os: ubuntu-24.04
             output_name: sqlift-linux-x64
             native_opts: >-
-              --static
+              -Ob
               --gc=serial
               -march=native
-              -H:+StripDebugInfo
+              -H:+UnlockExperimentalVMOptions
               -H:+RemoveUnusedSymbols
+              -H:+RemoveUnusedDebugInfo
+              -H:+RemoveSaturatedTypeFlows
               -H:+ReportExceptionStackTraces
-              -H:+ReduceSecurityChecks
-              -H:+RemoveRedundantBoundsChecks
+              -H:+StackTrace
+              -H:-DeleteLocalSymbols
               -H:+UseStringDeduplication
-              -H:+OptimizeServiceLoading
-              -H:MaximumHeapSize=2G
-              -H:+BuildReport
-              --pgo
+              -H:+OptimizeDiscovery
+              -H:-IncludeNodeSourcePositions
+              -H:InlineGraalNodeCount=2 
+              -H:MaximumHeapSize=1G
+              -H:+UseLightweightReflection
+              -H:+TuneInlinerExploration
+              -H:+InlineArrayAccess
+              -H:+InlineDuringParsing
+              -H:+InlineBytecodeMethods
+              -H:+InlineIntrinsicsDuringParsing
+              -H:+GenLoopSafepoints=false
+              -H:-InstallSegfaultHandler
+              -R:MaximumHeapSizePercent=80
+              -H:TraceClassInitialization=false
+              -H:+UseConditionalMoves
               --initialize-at-build-time
-              --trace-class-initialization=false
+              --link-at-build-time
               --no-fallback
           - os: macos-13
             arch: x64
             output_name: sqlift-macos-x64
             native_opts: >-
-              --static
+              -Ob
               --gc=serial
               -march=native
-              -H:+StripDebugInfo
+              -H:+UnlockExperimentalVMOptions
               -H:+RemoveUnusedSymbols
+              -H:+RemoveUnusedDebugInfo
+              -H:+RemoveSaturatedTypeFlows
               -H:+ReportExceptionStackTraces
-              -H:+ReduceSecurityChecks
-              -H:+RemoveRedundantBoundsChecks
+              -H:+StackTrace
+              -H:-DeleteLocalSymbols
               -H:+UseStringDeduplication
-              -H:+OptimizeServiceLoading
-              -H:MaximumHeapSize=2G
-              -H:+BuildReport
-              --pgo
+              -H:+OptimizeDiscovery
+              -H:-IncludeNodeSourcePositions
+              -H:InlineGraalNodeCount=2
+              -H:MaximumHeapSize=1G
+              -H:+UseLightweightReflection
+              -H:+TuneInlinerExploration
+              -H:+InlineArrayAccess
+              -H:+InlineDuringParsing
+              -H:+InlineBytecodeMethods
+              -H:+InlineIntrinsicsDuringParsing
+              -H:+GenLoopSafepoints=false
+              -H:-InstallSegfaultHandler
+              -R:MaximumHeapSizePercent=80
+              -H:TraceClassInitialization=false
+              -H:+UseConditionalMoves
               --initialize-at-build-time
-              --trace-class-initialization=false
+              --link-at-build-time
               --no-fallback
           - os: macos-14
             arch: arm64
             output_name: sqlift-macos-arm64
             native_opts: >-
-              --static
+              -Ob
               --gc=serial
               -march=native
-              -H:+StripDebugInfo
+              -H:+UnlockExperimentalVMOptions
               -H:+RemoveUnusedSymbols
+              -H:+RemoveUnusedDebugInfo
+              -H:+RemoveSaturatedTypeFlows
               -H:+ReportExceptionStackTraces
-              -H:+ReduceSecurityChecks
-              -H:+RemoveRedundantBoundsChecks
+              -H:+StackTrace
+              -H:-DeleteLocalSymbols
               -H:+UseStringDeduplication
-              -H:+OptimizeServiceLoading
-              -H:MaximumHeapSize=2G
-              -H:+BuildReport
-              --pgo
+              -H:+OptimizeDiscovery
+              -H:-IncludeNodeSourcePositions
+              -H:InlineGraalNodeCount=2
+              -H:MaximumHeapSize=1G
+              -H:+UseLightweightReflection
+              -H:+TuneInlinerExploration
+              -H:+InlineArrayAccess
+              -H:+InlineDuringParsing
+              -H:+InlineBytecodeMethods
+              -H:+InlineIntrinsicsDuringParsing
+              -H:+GenLoopSafepoints=false
+              -H:-InstallSegfaultHandler
+              -R:MaximumHeapSizePercent=80
+              -H:TraceClassInitialization=false
+              -H:+UseConditionalMoves
               --initialize-at-build-time
-              --trace-class-initialization=false
+              --link-at-build-time
               --no-fallback
     steps:
       - uses: actions/checkout@v3
@@ -84,31 +123,33 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: wrapper
-          cache-read-only: false
+      - name: Configure build environment
+        run: |
+          echo "org.gradle.caching=true" >> gradle.properties
+          echo "org.gradle.parallel=true" >> gradle.properties
+          echo "org.gradle.daemon=false" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
 
       - name: Build with Gradle
-        run: ./gradlew build -Dorg.gradle.caching=true
+        run: |
+          ./gradlew clean
+          ./gradlew build --no-daemon --parallel
 
       - name: Build Native Image
         run: |
           ./gradlew nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }}"
 
-      - name: Strip Debug Symbols (Non-Windows)
+      - name: Strip Binary
         run: |
           cd app/build/native/nativeCompile/
-          strip sqlift
+          strip sqlift || true
 
-      - name: Rename binaries
-        shell: bash
+      - name: Rename Binary
         run: |
           cd app/build/native/nativeCompile/
           mv sqlift ${{ matrix.output_name }}
 
-      - name: Upload artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.output_name }}
@@ -119,7 +160,7 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     steps:
-      - name: Download artifacts
+      - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
           path: artifacts
