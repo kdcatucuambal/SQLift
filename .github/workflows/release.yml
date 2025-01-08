@@ -13,28 +13,67 @@ jobs:
         include:
           - os: ubuntu-24.04
             output_name: sqlift-linux-x64
-            native_opts: "--static --gc=serial -H:+StripDebugInfo -H:+RemoveUnusedSymbols -H:+ReportExceptionStackTraces -H:+ReduceSecurityChecks -H:+RemoveRedundantBoundsChecks -H:+UseStringDeduplication -H:+OptimizeServiceLoading -H:-DeleteLocalSymbols --initialize-at-build-time --trace-class-initialization=false --no-fallback"
+            native_opts: >-
+              --static
+              --gc=serial
+              -march=native
+              -H:+StripDebugInfo
+              -H:+RemoveUnusedSymbols
+              -H:+ReportExceptionStackTraces
+              -H:+ReduceSecurityChecks
+              -H:+RemoveRedundantBoundsChecks
+              -H:+UseStringDeduplication
+              -H:+OptimizeServiceLoading
+              -H:MaximumHeapSize=2G
+              -H:+BuildReport
+              --pgo
+              --initialize-at-build-time
+              --trace-class-initialization=false
+              --no-fallback
           - os: macos-13
             arch: x64
             output_name: sqlift-macos-x64
-            native_opts: "--static --gc=serial -H:+StripDebugInfo -H:+RemoveUnusedSymbols -H:+ReportExceptionStackTraces -H:+ReduceSecurityChecks -H:+RemoveRedundantBoundsChecks -H:+UseStringDeduplication -H:+OptimizeServiceLoading -H:-DeleteLocalSymbols --initialize-at-build-time --trace-class-initialization=false --no-fallback"
+            native_opts: >-
+              --static
+              --gc=serial
+              -march=native
+              -H:+StripDebugInfo
+              -H:+RemoveUnusedSymbols
+              -H:+ReportExceptionStackTraces
+              -H:+ReduceSecurityChecks
+              -H:+RemoveRedundantBoundsChecks
+              -H:+UseStringDeduplication
+              -H:+OptimizeServiceLoading
+              -H:MaximumHeapSize=2G
+              -H:+BuildReport
+              --pgo
+              --initialize-at-build-time
+              --trace-class-initialization=false
+              --no-fallback
           - os: macos-14
             arch: arm64
             output_name: sqlift-macos-arm64
-            native_opts: "--static --gc=serial -H:+StripDebugInfo -H:+RemoveUnusedSymbols -H:+ReportExceptionStackTraces -H:+ReduceSecurityChecks -H:+RemoveRedundantBoundsChecks -H:+UseStringDeduplication -H:+OptimizeServiceLoading -H:-DeleteLocalSymbols --initialize-at-build-time --trace-class-initialization=false --no-fallback"
-          - os: windows-2025
-            arch: x64
-            target: x64
-            output_name: sqlift-windows-x64
-            native_opts: "--gc=serial -H:+StripDebugInfo -H:+RemoveUnusedSymbols -H:+ReportExceptionStackTraces -H:+ReduceSecurityChecks -H:+RemoveRedundantBoundsChecks -H:+UseStringDeduplication -H:+OptimizeServiceLoading -H:-DeleteLocalSymbols --initialize-at-build-time --trace-class-initialization=false --no-fallback"
-          - os: windows-2025
-            arch: arm64
-            target: aarch64
-            output_name: sqlift-windows-arm64
-            cross_compile: true
-            native_opts: "--gc=serial -H:+StripDebugInfo -H:+RemoveUnusedSymbols -H:+ReportExceptionStackTraces -H:+ReduceSecurityChecks -H:+RemoveRedundantBoundsChecks -H:+UseStringDeduplication -H:+OptimizeServiceLoading -H:-DeleteLocalSymbols --initialize-at-build-time --trace-class-initialization=false --no-fallback"
+            native_opts: >-
+              --static
+              --gc=serial
+              -march=native
+              -H:+StripDebugInfo
+              -H:+RemoveUnusedSymbols
+              -H:+ReportExceptionStackTraces
+              -H:+ReduceSecurityChecks
+              -H:+RemoveRedundantBoundsChecks
+              -H:+UseStringDeduplication
+              -H:+OptimizeServiceLoading
+              -H:MaximumHeapSize=2G
+              -H:+BuildReport
+              --pgo
+              --initialize-at-build-time
+              --trace-class-initialization=false
+              --no-fallback
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
@@ -45,54 +84,35 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           native-image-job-reports: 'true'
 
-      - name: Install UPX
-        if: runner.os != 'Windows'
-        run: |
-          if [ "${{ runner.os }}" == "Linux" ]; then
-            sudo apt-get update && sudo apt-get install -y upx
-          elif [ "${{ runner.os }}" == "macOS" ]; then
-            brew install upx
-          fi
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
+          cache-read-only: false
 
       - name: Build with Gradle
         run: ./gradlew build -Dorg.gradle.caching=true
 
-      - name: Build Native Image (Standard)
-        if: ${{ !matrix.cross_compile }}
+      - name: Build Native Image
         run: |
-          ./gradlew nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }} --target=${{ matrix.arch }}-windows"
+          ./gradlew nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }}"
 
-      - name: Build Native Image (ARM64)
-        if: ${{ matrix.cross_compile }}
-        shell: powershell
-        run: |
-          ./gradlew nativeCompile `
-            --info `
-            "-Parch=${{ matrix.arch }}" `
-            "-PnativeImageArgs=${{ matrix.native_opts }} --target=${{ matrix.target }}-windows"
-
-      - name: Optimize Binary Size (Non-Windows)
-        if: runner.os != 'Windows'
+      - name: Strip Debug Symbols (Non-Windows)
         run: |
           cd app/build/native/nativeCompile/
           strip sqlift
-          upx --best --lzma sqlift
 
       - name: Rename binaries
         shell: bash
         run: |
           cd app/build/native/nativeCompile/
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            mv sqlift.exe ${{ matrix.output_name }}.exe
-          else
-            mv sqlift ${{ matrix.output_name }}
-          fi
+          mv sqlift ${{ matrix.output_name }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.output_name }}
-          path: app/build/native/nativeCompile/${{ matrix.output_name }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          path: app/build/native/nativeCompile/${{ matrix.output_name }}
           if-no-files-found: error
 
   release:
@@ -111,7 +131,5 @@ jobs:
             artifacts/sqlift-linux-x64/sqlift-linux-x64
             artifacts/sqlift-macos-x64/sqlift-macos-x64
             artifacts/sqlift-macos-arm64/sqlift-macos-arm64
-            artifacts/sqlift-windows-x64/sqlift-windows-x64.exe
-            artifacts/sqlift-windows-arm64/sqlift-windows-arm64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
