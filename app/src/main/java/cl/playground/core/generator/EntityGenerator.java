@@ -66,7 +66,9 @@ public class EntityGenerator {
 
         // Agregar imports de Lombok si está habilitado
         if (useLombok) {
-            imports.add("import lombok.Data;");
+            imports.add("import lombok.Getter;");
+            imports.add("import lombok.Setter;");
+            imports.add("import lombok.ToString;");
             imports.add("import lombok.NoArgsConstructor;");
             imports.add("import lombok.AllArgsConstructor;");
         }
@@ -127,7 +129,33 @@ public class EntityGenerator {
 
         // Agregar anotaciones de Lombok si está habilitado
         if (useLombok) {
-            builder.append("@Data\n");
+            builder.append("@Getter\n");
+            builder.append("@Setter\n");
+
+            // Generar @ToString con exclude para las relaciones ManyToOne
+            List<String> foreignKeyFields = table.getRelations().stream()
+                .filter(RelationMetadata::isManyToOne)
+                .map(relation -> generateFieldName(relation.getTargetTable()))
+                .map(fieldName -> fieldName.endsWith("s") ? fieldName.substring(0, fieldName.length() - 1) : fieldName)
+                .collect(Collectors.toList());
+
+            boolean hasMapsId = table.getRelations().stream()
+                .filter(RelationMetadata::isManyToOne)
+                .anyMatch(rel -> table.getPrimaryKeys().contains(rel.getSourceColumn()));
+
+            if (!foreignKeyFields.isEmpty() && !hasMapsId) {
+                builder.append("@ToString(exclude = {");
+                for (int i = 0; i < foreignKeyFields.size(); i++) {
+                    builder.append("\"").append(foreignKeyFields.get(i)).append("\"");
+                    if (i < foreignKeyFields.size() - 1) {
+                        builder.append(", ");
+                    }
+                }
+                builder.append("})\n");
+            } else {
+                builder.append("@ToString\n");
+            }
+
             builder.append("@NoArgsConstructor\n");
             builder.append("@AllArgsConstructor\n");
         }
@@ -142,23 +170,23 @@ public class EntityGenerator {
 
         // Agregar restricciones de unicidad si existen
         List<ColumnMetadata> uniqueColumns = table.getColumns().stream()
-                .filter(ColumnMetadata::isUnique)
-                .collect(Collectors.toList());
+            .filter(ColumnMetadata::isUnique)
+            .collect(Collectors.toList());
 
         if (!uniqueColumns.isEmpty()) {
             builder.append(",\n    uniqueConstraints = {\n");
             for (int i = 0; i < uniqueColumns.size(); i++) {
                 ColumnMetadata column = uniqueColumns.get(i);
                 builder.append("        @UniqueConstraint(\n")
-                        .append("            name = \"uk_")
-                        .append(tableName)
-                        .append("_")
-                        .append(column.getColumnName().toLowerCase())
-                        .append("\",\n")
-                        .append("            columnNames = {\"")
-                        .append(column.getColumnName())
-                        .append("\"}\n")
-                        .append("        )");
+                    .append("            name = \"uk_")
+                    .append(tableName)
+                    .append("_")
+                    .append(column.getColumnName().toLowerCase())
+                    .append("\",\n")
+                    .append("            columnNames = {\"")
+                    .append(column.getColumnName())
+                    .append("\"}\n")
+                    .append("        )");
                 if (i < uniqueColumns.size() - 1) {
                     builder.append(",");
                 }
@@ -396,7 +424,9 @@ public class EntityGenerator {
 
         // Agregar anotaciones de Lombok si está habilitado
         if (useLombok) {
-            builder.append("    @Data\n");
+            builder.append("    @Getter\n");
+            builder.append("    @Setter\n");
+            builder.append("    @ToString\n");
             builder.append("    @NoArgsConstructor\n");
             builder.append("    @AllArgsConstructor\n");
         }

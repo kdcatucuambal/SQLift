@@ -75,7 +75,7 @@ public class InitCommand implements Runnable {
                 "   ```\n\n" +
                 "4. The generated classes will be saved in the specified package directory under `src/main/java`.\n";
 
-        writeToFile("README.md", readmeContent);
+        writeToFile("sqlift.md", readmeContent);
     }
 
     private void writeToFile(String fileName, String content) {

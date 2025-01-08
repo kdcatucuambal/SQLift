@@ -1,24 +1,52 @@
-# Ignore macOS system files
-.DS_Store
-
-# Ignore Gradle project-specific cache directory
+# Gradle
 .gradle/
-
-# Ignore Gradle build output directory
 build/
+**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
 
-# Ignore IntelliJ IDEA project files
-.idea/
-*.iml
-
-# Ignore logs
-*.log
-
-# Ignore compiled Java class files
+# Java
 *.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
 
-# Ignore generated files from GraalVM native compilation
-build/native/
+# IDEs and editors
+.idea/
+*.iws
+*.iml
+*.ipr
+.settings/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# Ignore OS-specific files
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Project specific
+project_structure.txt
