@@ -183,3 +183,32 @@ jobs:
             artifacts/sqlift-macos-arm64/sqlift-macos-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg BINARY_PATH=artifacts/sqlift-linux-x64/sqlift-linux-x64 \
+            --build-arg VERSION=${{ github.ref_name }} \
+            -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:${{ github.ref_name }} \
+            -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:latest \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/sqlift-cli:${{ github.ref_name }}
+          docker push ghcr.io/${{ github.repository_owner }}/sqlift-cli:latest
