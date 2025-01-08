@@ -43,6 +43,9 @@ jobs:
               --initialize-at-build-time
               --link-at-build-time
               --no-fallback
+              --initialize-at-run-time=java.util.logging,jdk.internal.ref
+              -H:ReduceImageHeapSize=true
+              --no-server
           - os: macos-13
             arch: x64
             output_name: sqlift-macos-x64
@@ -76,6 +79,9 @@ jobs:
               --initialize-at-build-time
               --link-at-build-time
               --no-fallback
+              --initialize-at-run-time=java.util.logging,jdk.internal.ref
+              -H:ReduceImageHeapSize=true
+              --no-server
           - os: macos-14
             arch: arm64
             output_name: sqlift-macos-arm64
@@ -109,6 +115,9 @@ jobs:
               --initialize-at-build-time
               --link-at-build-time
               --no-fallback
+              --initialize-at-run-time=java.util.logging,jdk.internal.ref
+              -H:ReduceImageHeapSize=true
+              --no-server
     steps:
       - uses: actions/checkout@v3
         with:
