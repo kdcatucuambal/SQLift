@@ -48,6 +48,15 @@ graalvmNative {
     }
 }
 
+// Define the main class in the JAR manifest
+tasks.withType<Jar> {
+    manifest {
+        attributes(
+            "Main-Class" to "cl.playground.cli.CommandLineApp" // Ajusta según tu clase principal
+        )
+    }
+}
+
 tasks.test {
     // Use the JUnit Platform framework for testing
     useJUnitPlatform()
