@@ -5,7 +5,7 @@ FROM eclipse-temurin:17-jre
 WORKDIR /workspace
 
 # Variables de entorno
-ARG JAR_FILE
+ARG JAR_FILE=app/build/libs/app.jar
 ARG VERSION=latest
 
 # Copiar el JAR al contenedor

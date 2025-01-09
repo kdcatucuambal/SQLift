@@ -46,8 +46,7 @@ jobs:
 
       - name: Build Native Image
         run: |
-          ./gradlew clean
-          ./gradlew nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }}"
+          ./gradlew clean nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }}"
 
       - name: Strip Binary
         run: |
@@ -95,15 +94,22 @@ jobs:
         run: |
           ./gradlew clean build -x test
 
+      - name: Verify JAR Exists
+        run: |
+          if [ ! -f app/build/libs/app.jar ]; then
+            echo "Error: JAR file not found!"
+            exit 1
+          fi
+
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build Docker image
+      - name: Build and Push Docker Image
         run: |
           docker buildx create --use
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            --build-arg JAR_FILE=app/build/libs/sqlift-cli.jar \
+            --build-arg JAR_FILE=app/build/libs/app.jar \
             --build-arg VERSION=${{ github.ref_name }} \
             -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:${{ github.ref_name }} \
             -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:latest \
