@@ -4,15 +4,12 @@ FROM eclipse-temurin:17-jre
 # Crear el directorio de trabajo
 WORKDIR /workspace
 
-# Variables de entorno
-ARG JAR_FILE=app/build/libs/app.jar
-ARG VERSION=latest
-
-# Copiar el JAR al contenedor
-COPY ${JAR_FILE} app.jar
-
 # Etiqueta de la versión
+ARG VERSION=latest
 LABEL version="${VERSION}"
 
+# Copiar el JAR al contenedor
+COPY app/build/libs/*.jar /app.jar
+
 # Comando de inicio
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "/app.jar"]
