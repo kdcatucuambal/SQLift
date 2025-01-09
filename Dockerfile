@@ -1,5 +1,5 @@
 # Imagen base con JVM ligera
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 # Crear el directorio de trabajo
 WORKDIR /workspace
