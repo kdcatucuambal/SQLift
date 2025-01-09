@@ -1,11 +1,13 @@
-name: Build and Releases
+name: Build, Release, and Docker
+
 on:
   push:
     tags:
       - 'v*'
+
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build Native Binaries
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -13,111 +15,15 @@ jobs:
         include:
           - os: ubuntu-24.04
             output_name: sqlift-linux-x64
-            native_opts: >-
-              -Ob
-              --gc=serial
-              -march=native
-              -H:+UnlockExperimentalVMOptions
-              -H:+RemoveUnusedSymbols
-              -H:+RemoveUnusedDebugInfo
-              -H:+RemoveSaturatedTypeFlows
-              -H:+ReportExceptionStackTraces
-              -H:+StackTrace
-              -H:-DeleteLocalSymbols
-              -H:+UseStringDeduplication
-              -H:+OptimizeDiscovery
-              -H:-IncludeNodeSourcePositions
-              -H:InlineGraalNodeCount=2 
-              -H:MaximumHeapSize=1G
-              -H:+UseLightweightReflection
-              -H:+TuneInlinerExploration
-              -H:+InlineArrayAccess
-              -H:+InlineDuringParsing
-              -H:+InlineBytecodeMethods
-              -H:+InlineIntrinsicsDuringParsing
-              -H:+GenLoopSafepoints=false
-              -H:-InstallSegfaultHandler
-              -R:MaximumHeapSizePercent=80
-              -H:TraceClassInitialization=false
-              -H:+UseConditionalMoves
-              --initialize-at-build-time
-              --link-at-build-time
-              --no-fallback
-              --initialize-at-run-time=java.util.logging,jdk.internal.ref
-              -H:ReduceImageHeapSize=true
-              --no-server
+            native_opts: "--static --no-fallback"
           - os: macos-13
             arch: x64
             output_name: sqlift-macos-x64
-            native_opts: >-
-              -Ob
-              --gc=serial
-              -march=native
-              -H:+UnlockExperimentalVMOptions
-              -H:+RemoveUnusedSymbols
-              -H:+RemoveUnusedDebugInfo
-              -H:+RemoveSaturatedTypeFlows
-              -H:+ReportExceptionStackTraces
-              -H:+StackTrace
-              -H:-DeleteLocalSymbols
-              -H:+UseStringDeduplication
-              -H:+OptimizeDiscovery
-              -H:-IncludeNodeSourcePositions
-              -H:InlineGraalNodeCount=2
-              -H:MaximumHeapSize=1G
-              -H:+UseLightweightReflection
-              -H:+TuneInlinerExploration
-              -H:+InlineArrayAccess
-              -H:+InlineDuringParsing
-              -H:+InlineBytecodeMethods
-              -H:+InlineIntrinsicsDuringParsing
-              -H:+GenLoopSafepoints=false
-              -H:-InstallSegfaultHandler
-              -R:MaximumHeapSizePercent=80
-              -H:TraceClassInitialization=false
-              -H:+UseConditionalMoves
-              --initialize-at-build-time
-              --link-at-build-time
-              --no-fallback
-              --initialize-at-run-time=java.util.logging,jdk.internal.ref
-              -H:ReduceImageHeapSize=true
-              --no-server
+            native_opts: "--static --no-fallback"
           - os: macos-14
             arch: arm64
             output_name: sqlift-macos-arm64
-            native_opts: >-
-              -Ob
-              --gc=serial
-              -march=native
-              -H:+UnlockExperimentalVMOptions
-              -H:+RemoveUnusedSymbols
-              -H:+RemoveUnusedDebugInfo
-              -H:+RemoveSaturatedTypeFlows
-              -H:+ReportExceptionStackTraces
-              -H:+StackTrace
-              -H:-DeleteLocalSymbols
-              -H:+UseStringDeduplication
-              -H:+OptimizeDiscovery
-              -H:-IncludeNodeSourcePositions
-              -H:InlineGraalNodeCount=2
-              -H:MaximumHeapSize=1G
-              -H:+UseLightweightReflection
-              -H:+TuneInlinerExploration
-              -H:+InlineArrayAccess
-              -H:+InlineDuringParsing
-              -H:+InlineBytecodeMethods
-              -H:+InlineIntrinsicsDuringParsing
-              -H:+GenLoopSafepoints=false
-              -H:-InstallSegfaultHandler
-              -R:MaximumHeapSizePercent=80
-              -H:TraceClassInitialization=false
-              -H:+UseConditionalMoves
-              --initialize-at-build-time
-              --link-at-build-time
-              --no-fallback
-              --initialize-at-run-time=java.util.logging,jdk.internal.ref
-              -H:ReduceImageHeapSize=true
-              --no-server
+            native_opts: "--static --no-fallback"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -187,7 +93,6 @@ jobs:
   docker:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -201,12 +106,14 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build \
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
             --build-arg BINARY_PATH=artifacts/sqlift-linux-x64/sqlift-linux-x64 \
             --build-arg VERSION=${{ github.ref_name }} \
             -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:${{ github.ref_name }} \
             -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:latest \
-            .
+            --push .
 
       - name: Push Docker image
         run: |
