@@ -7,7 +7,6 @@ import cl.playground.core.engine.SchemaProcessor;
 import cl.playground.core.generator.EntityGenerator;
 import cl.playground.core.model.TableMetadata;
 import cl.playground.exception.ConfigurationException;
-import cl.playground.util.LogContent;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -31,10 +30,8 @@ public class GenerateCommand {
             }
 
             Map<String, Object> context = extractConfigContext(yamlFile.getPath());
-            LogContent.logConfiguration(context);
 
             String sqlContent = cl.playground.core.reader.SqlReader.readSql((String) context.get("schema"));
-            LogContent.logSqlContent(sqlContent);
 
             context.put("sqlContent", sqlContent);
 

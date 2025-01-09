@@ -12,21 +12,41 @@ public class InitCommand {
     }
 
     private void generateYamlFile() {
-        String yamlContent = "version: \"1.0\"\n" +
-            "sql:\n" +
-            "  engine: \"postgres\"\n" +
-            "  schema: \"path/to/your/schema.sql\"\n" +
-            "  output:\n" +
-            "    package: \"com.example.entities\"\n" +
-            "    lombok: true\n";
+        String yamlContent = """
+            version: "1.0"
+            sql:
+              engine: "postgres"
+              schema: "path/to/your/schema.sql"
+              output:
+                package: "com.example.entities"
+                lombok: true
+            """;
 
         writeToFile("sqlift.yaml", yamlContent);
     }
 
     private void generateReadmeFile() {
-        String readmeContent = "# SQLift Generator\n\n" +
-            "A tool to generate Java entity classes from SQL schema files.\n";
-        writeToFile("README.md", readmeContent);
+        String readmeContent = """
+            # SQLift Generator
+            
+            A tool to generate Java entity classes from SQL schema files.
+            
+            ## Configuration File Structure (sqlift.yml)
+            
+            ```yaml
+            version: "1.0"              # Version number (required)
+            
+            sql:
+              engine: "postgres"        # Database engine: postgres, mysql (required)
+              schema: "schema.sql"      # Path to your SQL schema file (required)
+              output:
+                package: "com.example"  # Base package for generated entities (required)
+                lombok: true           # Use Lombok annotations (optional)
+                jpa: "jakarta"         # JPA annotations style: jakarta/javax (optional)
+            ```
+            """;
+
+        writeToFile("sqlift.md", readmeContent);
     }
 
     private void writeToFile(String fileName, String content) {

@@ -4,7 +4,6 @@ import cl.playground.core.model.TableMetadata;
 import cl.playground.core.model.ColumnMetadata;
 import cl.playground.core.model.RelationMetadata;
 import cl.playground.core.types.PostgreSQLToJavaType;
-import cl.playground.util.Utils;
 
 import java.util.Set;
 import java.util.ArrayList;
@@ -163,7 +162,7 @@ public class EntityGenerator {
         // Asegurar que el nombre de la tabla siempre esté en plural
         String tableName = table.getTableName().toLowerCase();
         if (!tableName.endsWith("s")) {
-            tableName = Utils.toPlural(tableName);
+            tableName = toPlural(tableName);
         }
 
         builder.append("@Table(name = \"").append(tableName).append("\"");
@@ -321,7 +320,7 @@ public class EntityGenerator {
                         .append("    private Set<")
                         .append(targetClass)
                         .append("> ")
-                        .append(Utils.toPlural(fieldName)) // nombre del campo en plural
+                        .append(toPlural(fieldName)) // nombre del campo en plural
                         .append(" = new HashSet<>();\n\n");
             }
         }
@@ -655,7 +654,7 @@ public class EntityGenerator {
                 }
                 generateRelationGetterAndSetter(fieldName, targetClass, false, builder);
             } else {
-                String pluralField = Utils.toPlural(fieldName);
+                String pluralField = toPlural(fieldName);
                 generateRelationGetterAndSetter(pluralField, targetClass, true, builder);
             }
         }
@@ -698,5 +697,25 @@ public class EntityGenerator {
         }
 
         return part;
+    }
+
+    public String toPlural(String input) {
+        if (input == null || input.isEmpty() || input.endsWith("s")) {
+            return input;
+        }
+
+        // Reglas básicas de pluralización
+        if (input.endsWith("z")) {
+            return input.substring(0, input.length() - 1) + "ces";
+        }
+
+        if (input.endsWith("n") || input.endsWith("l") || input.endsWith("r") ||
+            input.endsWith("d") || input.endsWith("j") ||
+            input.endsWith("ch") || input.endsWith("sh")) {
+            return input + "es";
+        }
+
+        // Regla por defecto
+        return input + "s";
     }
 }

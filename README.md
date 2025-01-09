@@ -1,50 +1,114 @@
-# Development Guide
+# SQLift
 
-## Build Commands
+## Pagina Oficial
 
-| Command                         | Description |
-|---------------------------------|-------------|
-| `./gradlew nativeCompile`       | Compiles the project using GraalVM to generate a native executable. |
-| `./gradlew build`               | Builds the project normally (without native compilation). |
+[SQLift](https://andressep95.github.io/sqlift-install) - ¡No olvides dejar tu ⭐ y reportar issues!
 
-## Installation
+## Introducción
 
-| Command                                   | Description |
-|-------------------------------------------|-------------|
-| `mv app/build/native/nativeCompile/sqlift /usr/local/bin/` | Move the compiled executable to PATH for system-wide access. |
-| `rm /usr/local/bin/sqlift`                | Remove the executable from PATH if you need to recompile or fix errors. |
+SQLift es una herramienta que facilita el mapeo de consultas SQL a objetos Java. Puedes instalarla y utilizarla de dos
+formas: mediante un instalador nativo o usando Docker.
 
-## Environment Setup
+## Métodos de Instalación
 
-| Command                               | Description |
-|---------------------------------------|-------------|
-| `nano ~/.zshrc`                       | Open Zsh configuration file to edit environment variables. |
-| `export GRAALVM_HOME=/path/to/graalvm` | Set the GraalVM home directory in your environment variables. |
-| `export PATH=$GRAALVM_HOME/bin:$PATH`  | Add GraalVM to the system PATH. |
-| `source ~/.zshrc`                     | Apply changes made to `.zshrc` without restarting the terminal. |
-| `Ctrl + O`                            | Save changes in Nano editor. |
-| `Ctrl + X`                            | Exit Nano editor. |
+### 1. Instalador Nativo
 
-## Utility Commands
+Este método instala SQLift directamente en tu sistema, permitiendo un uso más simple de los comandos.
 
-| Command                         | Description |
-|---------------------------------|-------------|
-| `which sqlift`                  | Find the location of an executable in the system. |
-| `sudo rm /usr/local/bin/sqlift` | Remove a specific executable from `/usr/local/bin/`. |
+#### Requisitos
 
-## Git Commands
+- macOS (Apple Silicon o Intel) o Linux
+- Acceso a terminal con permisos de instalación
 
-1. Primero eliminar el tag tanto local como remoto:
+#### Pasos de Instalación
+
+**Para macOS:**
 
 ```bash
-# Eliminar tag local
-git tag -d v1.0.0
+curl -fsSL https://raw.githubusercontent.com/andressep95/sqlift-install/main/macos-install.sh | bash
+```
 
-# Eliminar tag remoto
-git push origin :refs/tags/v1.0.0
+**Para Linux:**
 
-# Agregar tag local
-git tag -a v1.0.0 -m "First release with Gradle migration"
+```bash
+curl -fsSL https://raw.githubusercontent.com/andressep95/sqlift-install/main/linux-install.sh | bash
+```
 
-# Agregar tag remoto
-git push origin v1.0.0
+El instalador:
+
+- Descarga el binario correspondiente a tu sistema
+- Lo instala en `~/.sqlift`
+- Lo agrega a tu `PATH`
+
+#### Verificación
+
+```bash
+sqlift --version
+```
+
+#### Comandos Básicos
+
+```bash
+sqlift init        # Inicializa la configuración
+sqlift generate    # Genera las entidades
+```
+
+### 2. Usando Docker
+
+Este método requiere Docker instalado pero ofrece mayor portabilidad.
+
+#### Requisitos
+
+- Docker instalado y en ejecución
+- Permisos para ejecutar comandos Docker
+
+#### Pasos de Instalación y Uso
+
+1. **Descargar la imagen:**
+
+```bash
+docker pull ghcr.io/andressep95/sqlift-cli:latest
+```
+
+2. **Comandos disponibles:**
+
+```bash
+# Inicializar configuración
+docker run --rm -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest init /workspace
+
+# Generar entidades
+docker run --rm -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest generate /workspace
+
+# Modo interactivo
+docker run -it -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest
+```
+
+## Configuración (Común para ambos métodos)
+
+Después de la instalación, deberás configurar SQLift mediante el archivo `sqlift.yml`:
+
+```yaml
+version: "1.0"
+sql:
+  engine: "postgres"  # Motor de base de datos
+  schema: "schema.sql"  # Ruta al archivo de esquema SQL
+  output:
+    package: "cl.playground.SpringSecurityBackend.model"  # Paquete base para las entidades
+    lombok: true  # Activar/desactivar anotaciones de Lombok
+```
+
+## Características Soportadas
+
+### Motores de Base de Datos
+
+- PostgreSQL ✅
+- MySQL (Próximamente)
+- Oracle (Próximamente)
+- SQL Server (Próximamente)
+
+### Generación de Código
+
+- Anotaciones Lombok (@Data, @Getter, @Setter)
+- Anotaciones JPA:
+    - Jakarta EE (@Entity, @Table, @Column)
+    - Java EE (javax.persistence.*)

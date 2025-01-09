@@ -85,7 +85,4 @@ public class SchemaProcessor {
         return tables;
     }
 
-    public Map<String, List<RelationMetadata>> getInverseRelationsMap() {
-        return inverseRelationsMap;
-    }
 }
