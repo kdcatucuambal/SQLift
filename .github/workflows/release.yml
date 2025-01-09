@@ -19,11 +19,11 @@ jobs:
           - os: macos-13
             arch: x64
             output_name: sqlift-macos-x64
-            native_opts: "--static --no-fallback"
+            native_opts: "--no-fallback"
           - os: macos-14
             arch: arm64
             output_name: sqlift-macos-arm64
-            native_opts: "--static --no-fallback"
+            native_opts: "--no-fallback"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -36,7 +36,6 @@ jobs:
           java-version: '17'
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          native-image-job-reports: 'true'
 
       - name: Configure build environment
         run: |
@@ -114,8 +113,3 @@ jobs:
             -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:${{ github.ref_name }} \
             -t ghcr.io/${{ github.repository_owner }}/sqlift-cli:latest \
             --push .
-
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/sqlift-cli:${{ github.ref_name }}
-          docker push ghcr.io/${{ github.repository_owner }}/sqlift-cli:latest
