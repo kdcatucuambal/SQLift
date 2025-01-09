@@ -44,13 +44,9 @@ jobs:
           echo "org.gradle.daemon=false" >> gradle.properties
           echo "org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
 
-      - name: Build with Gradle
-        run: |
-          ./gradlew clean
-          ./gradlew build --no-daemon --parallel
-
       - name: Build Native Image
         run: |
+          ./gradlew clean
           ./gradlew nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }}"
 
       - name: Strip Binary

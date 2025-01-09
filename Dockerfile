@@ -1,5 +1,5 @@
-# Imagen base ligera
-FROM alpine:latest
+# Imagen base ligera con versión específica
+FROM alpine:3.18
 
 # Crear el directorio de trabajo
 WORKDIR /workspace

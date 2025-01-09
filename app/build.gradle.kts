@@ -40,7 +40,6 @@ graalvmNative {
             imageName.set("sqlift") // Nombre del binario nativo
             buildArgs.addAll(
                 "--no-fallback",
-                "--static",
                 "--report-unsupported-elements-at-runtime",
                 "-H:+PrintImageObjectTree"
             )
