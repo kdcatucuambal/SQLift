@@ -134,8 +134,21 @@ public class EntityGenerator {
             // Generar @ToString con exclude para las relaciones ManyToOne
             List<String> foreignKeyFields = table.getRelations().stream()
                 .filter(RelationMetadata::isManyToOne)
-                .map(relation -> generateFieldName(relation.getTargetTable()))
-                .map(fieldName -> fieldName.endsWith("s") ? fieldName.substring(0, fieldName.length() - 1) : fieldName)
+                .map(relation -> {
+                    if (relation.getSourceColumn().contains("_")) {
+                        String[] parts = relation.getSourceColumn().split("_id")[0].split("_");
+                        if (parts.length > 1) {
+                            StringBuilder fieldNameBuilder = new StringBuilder(parts[0]);
+                            for (int i = 1; i < parts.length; i++) {
+                                fieldNameBuilder.append(Character.toUpperCase(parts[i].charAt(0)))
+                                    .append(parts[i].substring(1));
+                            }
+                            return fieldNameBuilder.toString();
+                        }
+                    }
+                    String fieldName = generateFieldName(relation.getTargetTable());
+                    return fieldName.endsWith("s") ? fieldName.substring(0, fieldName.length() - 1) : fieldName;
+                })
                 .collect(Collectors.toList());
 
             boolean hasMapsId = table.getRelations().stream()
