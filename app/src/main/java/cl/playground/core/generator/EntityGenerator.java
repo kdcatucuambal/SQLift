@@ -234,6 +234,7 @@ public class EntityGenerator {
 
     private void generateFields(TableMetadata table, StringBuilder builder) {
         Set<String> foreignKeyColumns = new HashSet<>();
+        Set<String> processedOneToManyFields = new HashSet<>(); // Nuevo Set para control
 
         // Recolectar las columnas que son FKs de relaciones ManyToOne
         for (RelationMetadata relation : table.getRelations()) {
@@ -243,23 +244,21 @@ public class EntityGenerator {
         }
 
         if (needsCompositeKey(table)) {
-            // Generar el campo de la clave compuesta
             String className = generateClassName(table.getTableName());
             builder.append("    @EmbeddedId\n")
-                    .append("    private ")
-                    .append(className)
-                    .append("Id id;\n\n");
+                .append("    private ")
+                .append(className)
+                .append("Id id;\n\n");
         }
 
         // Generar campos para las columnas
         for (ColumnMetadata column : table.getColumns()) {
             boolean isForeignKey = foreignKeyColumns.contains(column.getColumnName());
             boolean isPartOfCompositeKey = needsCompositeKey(table)
-                    && table.getPrimaryKeys().contains(column.getColumnName());
+                && table.getPrimaryKeys().contains(column.getColumnName());
             boolean isForeignKeyInCompositeKey = needsCompositeKey(table)
-                    && isForeignKey;
+                && isForeignKey;
 
-            // Excluir columnas que son claves foráneas y ya están en relaciones
             if (!isForeignKey && !isPartOfCompositeKey && !isForeignKeyInCompositeKey) {
                 generateFieldAnnotations(column, table.getPrimaryKeys(), builder);
                 generateFieldDeclaration(column, builder);
@@ -279,40 +278,42 @@ public class EntityGenerator {
 
                 builder.append("    @ManyToOne\n");
 
-                // Agregar @MapsId si es clave compuesta
                 if (needsCompositeKey(table)) {
                     builder.append("    @MapsId(\"")
-                            .append(generateFieldName(relation.getSourceColumn()))
-                            .append("\")\n");
+                        .append(generateFieldName(relation.getSourceColumn()))
+                        .append("\")\n");
                 }
 
                 builder.append("    @JoinColumn(\n")
-                        .append("        name = \"")
-                        .append(relation.getSourceColumn())
-                        .append("\",\n")
-                        .append("        nullable = false,\n")
-                        .append("        foreignKey = @ForeignKey(name = \"fk_")
-                        .append(table.getTableName().toLowerCase())
-                        .append("_")
-                        .append(relation.getTargetTable().toLowerCase())
-                        .append("\")\n")
-                        .append("    )\n")
-                        .append("    private ")
-                        .append(targetClass)
-                        .append(" ")
-                        .append(fieldName)
-                        .append(";\n\n");
+                    .append("        name = \"")
+                    .append(relation.getSourceColumn())
+                    .append("\",\n")
+                    .append("        nullable = false,\n")
+                    .append("        foreignKey = @ForeignKey(name = \"fk_")
+                    .append(table.getTableName().toLowerCase())
+                    .append("_")
+                    .append(relation.getTargetTable().toLowerCase())
+                    .append("\")\n")
+                    .append("    )\n")
+                    .append("    private ")
+                    .append(targetClass)
+                    .append(" ")
+                    .append(fieldName)
+                    .append(";\n\n");
             } else {
-                // Para OneToMany
-                String targetFieldName = generateFieldName(table.getTableName());
-                // Asegurar que el mappedBy use el nombre en singular
-                if (targetFieldName.endsWith("s")) {
-                    targetFieldName = targetFieldName.substring(0, targetFieldName.length() - 1);
-                }
+                // Para OneToMany, verificar si ya procesamos este campo
+                String pluralFieldName = toPlural(fieldName);
+                if (!processedOneToManyFields.contains(pluralFieldName)) {
+                    processedOneToManyFields.add(pluralFieldName);
 
-                builder.append("    @OneToMany(\n")
+                    String targetFieldName = generateFieldName(table.getTableName());
+                    if (targetFieldName.endsWith("s")) {
+                        targetFieldName = targetFieldName.substring(0, targetFieldName.length() - 1);
+                    }
+
+                    builder.append("    @OneToMany(\n")
                         .append("        mappedBy = \"")
-                        .append(targetFieldName) // mappedBy en singular
+                        .append(targetFieldName)
                         .append("\",\n")
                         .append("        cascade = CascadeType.ALL,\n")
                         .append("        orphanRemoval = true\n")
@@ -320,8 +321,9 @@ public class EntityGenerator {
                         .append("    private Set<")
                         .append(targetClass)
                         .append("> ")
-                        .append(toPlural(fieldName)) // nombre del campo en plural
+                        .append(pluralFieldName)
                         .append(" = new HashSet<>();\n\n");
+                }
             }
         }
     }
