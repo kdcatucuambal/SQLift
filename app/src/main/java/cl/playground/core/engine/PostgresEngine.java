@@ -1,9 +1,9 @@
 package cl.playground.core.engine;
 
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class PostgresEngine {
 
@@ -146,47 +146,36 @@ public class PostgresEngine {
     }
 
     public List<String> extractPrimaryKeyColumns(String sql) {
-        List<String> primaryKeyColumns = new ArrayList<>();
+        List<String> primaryKeys = new ArrayList<>();
 
-        // 1. Detectar clave primaria simple con variantes
-        Pattern simplePattern = Pattern.compile(
-            // Comienza después del paréntesis de apertura de la definición de tabla
-            "\\([^)]*?" +
-                // Captura el nombre de la columna seguido de un tipo de dato
-                "(\\w+)\\s+(?:(?:INTEGER|SERIAL|UUID|NUMERIC|BIGINT|VARCHAR|TEXT)(?:\\([^)]*\\))?)" +
-                // Captura cualquier modificador antes de PRIMARY KEY
-                "\\s*(?:NOT\\s+NULL\\s+)?(?:UNIQUE\\s+)?(?:CONSTRAINT\\s+\\w+\\s+)?" +
-                // Captura PRIMARY KEY
-                "PRIMARY\\s+KEY\\b",
-            Pattern.CASE_INSENSITIVE
-                                               );
+        // Limpiar comentarios y procesar todo en una sola pasada
+        String cleanSql = sql.replaceAll("--[^\\n]*", "")
+            .replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", " ");
 
-        Matcher simpleMatcher = simplePattern.matcher(sql);
-        while (simpleMatcher.find()) {
-            String column = simpleMatcher.group(1).trim();
-            if (!primaryKeyColumns.contains(column)) {
-                primaryKeyColumns.add(column);
-            }
-        }
+        Pattern pkPattern = Pattern.compile(
+            // Captura PKs simples
+            "(?:(?:\\(|,)\\s*([\"\\w.-]+)\\s+(?:INTEGER|SERIAL|UUID|NUMERIC|BIGINT|VARCHAR|TEXT|TIMESTAMP|DATE|DECIMAL)(?:\\([^)]*\\))?\\s*(?:NOT\\s+NULL\\s+)?(?:UNIQUE\\s+)?(?:CONSTRAINT\\s+\\w+\\s+)?PRIMARY\\s+KEY\\b)" +
+                "|" +
+                // Captura PKs compuestas
+                "(?:CONSTRAINT\\s+[\"\\w.-]+\\s+)?PRIMARY\\s+KEY\\s*\\(([^)]+)\\)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+                                           );
 
-        // 2. Si no se encontró PK simple o además hay PK compuesta, buscar PK compuesta
-        Pattern compositePattern = Pattern.compile(
-            // Busca la definición de PRIMARY KEY al final de la tabla
-            ",\\s*(?:CONSTRAINT\\s+\\w+\\s+)?PRIMARY\\s+KEY\\s*\\(([^)]+)\\)",
-            Pattern.CASE_INSENSITIVE
-                                                  );
-
-        Matcher compositeMatcher = compositePattern.matcher(sql);
-        while (compositeMatcher.find()) {
-            String[] columns = compositeMatcher.group(1).split(",");
-            for (String column : columns) {
-                String trimmedColumn = column.trim();
-                if (!primaryKeyColumns.contains(trimmedColumn)) {
-                    primaryKeyColumns.add(trimmedColumn);
+        Matcher matcher = pkPattern.matcher(cleanSql);
+        while (matcher.find()) {
+            if (matcher.group(1) != null) {
+                // PK simple
+                String column = matcher.group(1).trim().replaceAll("^\"|\"$", "");
+                if (!primaryKeys.contains(column)) primaryKeys.add(column);
+            } else if (matcher.group(2) != null) {
+                // PK compuesta
+                for (String column : matcher.group(2).split(",")) {
+                    String cleanColumn = column.trim().replaceAll("^\"|\"$", "").replaceAll("\\s+", " ");
+                    if (!primaryKeys.contains(cleanColumn)) primaryKeys.add(cleanColumn);
                 }
             }
         }
 
-        return primaryKeyColumns;
+        return primaryKeys;
     }
 }
