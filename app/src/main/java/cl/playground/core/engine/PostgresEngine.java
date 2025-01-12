@@ -95,23 +95,6 @@ public class PostgresEngine {
         return null;
     }
 
-    public List<String> extractTableRelations(String sql) {
-        List<String> relations = new ArrayList<>();
-        Pattern pattern = Pattern.compile(
-                "FOREIGN\\s+KEY\\s*\\(([^)]+)\\)\\s*REFERENCES\\s+([^\\s]+)\\s*\\(([^)]+)\\)",
-                Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(sql);
-
-        while (matcher.find()) {
-            String sourceColumn = matcher.group(1).trim();
-            String targetTable = matcher.group(2).trim();
-            String targetColumn = matcher.group(3).trim();
-            relations.add(String.format("%s -> %s.%s", sourceColumn, targetTable, targetColumn));
-        }
-
-        return relations;
-    }
-
     public boolean isNotNullColumn(String columnDefinition) {
         // Verifica NOT NULL explícito
         Pattern notNullPattern = Pattern.compile(".*\\bNOT\\s+NULL\\b.*",
@@ -178,4 +161,56 @@ public class PostgresEngine {
 
         return primaryKeys;
     }
+
+    public List<String> extractTableRelations(String sql) {
+        List<String> relations = new ArrayList<>();
+
+        // Limpiar comentarios
+        String cleanSql = sql.replaceAll("--[^\\n]*", "")
+            .replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", " ");
+
+        Pattern fkPattern = Pattern.compile(
+            // 1. FK inline en definición de columna
+            "(?:(?:\\(|,)\\s*([\"\\w.-]+)\\s+(?:INTEGER|SERIAL|UUID|NUMERIC|BIGINT|VARCHAR|TEXT|TIMESTAMP|DATE|DECIMAL)(?:\\([^)]*\\))?\\s+" +
+                "REFERENCES\\s+([\"\\w.-]+)\\s*\\(([^)]+)\\))" +
+                "|" +
+                // 2. FK con CONSTRAINT nombrado
+                "(?:CONSTRAINT\\s+[\"\\w.-]+\\s+)?" +
+                "FOREIGN\\s+KEY\\s*\\(([^)]+)\\)\\s*" +
+                "REFERENCES\\s+([\"\\w.-]+)\\s*\\(([^)]+)\\)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+                                           );
+
+        Matcher matcher = fkPattern.matcher(cleanSql);
+        while (matcher.find()) {
+            if (matcher.group(1) != null) {
+                // FK inline
+                String sourceColumn = matcher.group(1).trim().replaceAll("^\"|\"$", "");
+                String targetTable = matcher.group(2).trim().replaceAll("^\"|\"$", "");
+                String targetColumn = matcher.group(3).trim().replaceAll("^\"|\"$", "");
+                relations.add(String.format("%s -> %s.%s",
+                    sourceColumn.replaceAll("\\s+", " "),
+                    targetTable.replaceAll("\\s+", " "),
+                    targetColumn.replaceAll("\\s+", " ")));
+            } else if (matcher.group(4) != null) {
+                // FK con CONSTRAINT
+                String[] sourceColumns = matcher.group(4).split(",");
+                String targetTable = matcher.group(5).trim().replaceAll("^\"|\"$", "");
+                String[] targetColumns = matcher.group(6).split(",");
+
+                // Manejar FKs compuestas
+                for (int i = 0; i < sourceColumns.length && i < targetColumns.length; i++) {
+                    String sourceColumn = sourceColumns[i].trim().replaceAll("^\"|\"$", "");
+                    String targetColumn = targetColumns[i].trim().replaceAll("^\"|\"$", "");
+                    relations.add(String.format("%s -> %s.%s",
+                        sourceColumn.replaceAll("\\s+", " "),
+                        targetTable.replaceAll("\\s+", " "),
+                        targetColumn.replaceAll("\\s+", " ")));
+                }
+            }
+        }
+
+        return relations;
+    }
+
 }

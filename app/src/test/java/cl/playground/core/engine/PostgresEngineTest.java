@@ -1,5 +1,6 @@
 package cl.playground.core.engine;
 
+import cl.playground.core.model.TableMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -231,6 +232,112 @@ class PostgresEngineTest {
         );
         """;
 
+    private final String TEST_SCHEMA_RELATIONS1 = """
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) NOT NULL UNIQUE
+            );
+
+            CREATE TABLE posts (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL,
+                title VARCHAR(255),
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            );
+
+            CREATE TABLE comments (
+                id SERIAL PRIMARY KEY,
+                post_id INT NOT NULL,
+                user_id INT NOT NULL,
+                content TEXT,
+                FOREIGN KEY (post_id) REFERENCES posts (id),
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            );
+
+            CREATE TABLE orders (
+                id SERIAL PRIMARY KEY,
+                customer_id INT,
+                FOREIGN KEY (customer_id) REFERENCES customers (id)
+            );
+            """;
+
+    private final String TEST_SCHEMA_RELATIONS_IMPOSSIBLE ="""
+    CREATE TABLE authors (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL
+    );
+
+    CREATE TABLE books (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        author_id INT NOT NULL,
+        FOREIGN KEY (author_id) REFERENCES authors (id)
+    );
+
+    CREATE TABLE publishers (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL
+    );
+
+    CREATE TABLE book_publishers (
+        book_id INT NOT NULL,
+        publisher_id INT NOT NULL,
+        PRIMARY KEY (book_id, publisher_id),
+        FOREIGN KEY (book_id) REFERENCES books (id),
+        FOREIGN KEY (publisher_id) REFERENCES publishers (id)
+    );
+
+    CREATE TABLE reviews (
+        id SERIAL PRIMARY KEY,
+        book_id INT NOT NULL,
+        reviewer_name VARCHAR(100),
+        rating INT,
+        FOREIGN KEY (book_id) REFERENCES books (id)
+    );
+
+    CREATE TABLE categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL
+    );
+
+    CREATE TABLE book_categories (
+        book_id INT NOT NULL,
+        category_id INT NOT NULL,
+        PRIMARY KEY (book_id, category_id),
+        FOREIGN KEY (book_id) REFERENCES books (id),
+        FOREIGN KEY (category_id) REFERENCES categories (id)
+    );
+
+    CREATE TABLE libraries (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL
+    );
+
+    CREATE TABLE library_books (
+        library_id INT NOT NULL,
+        book_id INT NOT NULL,
+        quantity INT NOT NULL,
+        PRIMARY KEY (library_id, book_id),
+        FOREIGN KEY (library_id) REFERENCES libraries (id),
+        FOREIGN KEY (book_id) REFERENCES books (id)
+    );
+
+    CREATE TABLE orders (
+        id SERIAL PRIMARY KEY,
+        library_id INT NOT NULL,
+        FOREIGN KEY (library_id) REFERENCES libraries (id)
+    );
+
+    CREATE TABLE order_items (
+        order_id INT NOT NULL,
+        book_id INT NOT NULL,
+        quantity INT NOT NULL,
+        PRIMARY KEY (order_id, book_id),
+        FOREIGN KEY (order_id) REFERENCES orders (id),
+        FOREIGN KEY (book_id) REFERENCES books (id)
+    );
+    """;
+
 
     @BeforeEach
     void setUp() {
@@ -415,5 +522,27 @@ class PostgresEngineTest {
             String.format("Tabla %s: No se encontraron todas las PKs esperadas.\nEsperadas: %s\nEncontradas: %s",
                 tableName, expected, actual)
                   );
+    }
+
+    @Test
+    void testExtractTableRelations() {
+
+        List<String> statements = engine.extractCreateTableStatements(TEST_SCHEMA_RELATIONS_IMPOSSIBLE);
+
+        for (String statement : statements) {
+            String tableName = engine.extractTableName(statement);
+            List<String> relations = engine.extractTableRelations(statement);
+
+            System.out.println("\n=================================");
+            System.out.println("Evaluando sentencia: \n" + statement.trim());
+            System.out.println("---------------------------------");
+            System.out.println("Tabla: " + tableName);
+            System.out.println("Relaciones encontradas: " + relations);
+            System.out.println("=================================\n");
+
+            // Validar que se extrajeron relaciones correctamente
+            assertNotNull(relations, "Las relaciones no deberían ser nulas para la tabla: " + tableName);
+            relations.forEach(relation -> assertFalse(relation.isBlank(), "Una relación extraída está vacía para la tabla: " + tableName));
+        }
     }
 }
