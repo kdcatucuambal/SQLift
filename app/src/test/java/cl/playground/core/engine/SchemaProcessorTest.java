@@ -208,7 +208,7 @@ class SchemaProcessorTest {
 
     @Test
     void processImpossiblesSchemma() {
-        List<TableMetadata> tables = schemaProcessor.processSchema(TEST_SCHEMA_IMPOSSIBLE_CASE);
+        List<TableMetadata> tables = schemaProcessor.processSchema(sqlContent);
 
         for (TableMetadata table : tables) {
             System.out.println("\n=================================");

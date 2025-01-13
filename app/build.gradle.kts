@@ -8,8 +8,6 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
-    // GraalVM plugin for generating native binaries
-    id("org.graalvm.buildtools.native") version "0.10.4"
 }
 
 repositories {
@@ -32,20 +30,6 @@ java {
 application {
     // Define the main class for the application.
     mainClass = "cl.playground.cli.CommandLineApp"
-}
-
-graalvmNative {
-    binaries {
-        named("main") {
-            imageName.set("sqlift") // Nombre del binario nativo
-            buildArgs.addAll(
-                "--no-fallback",
-                "--report-unsupported-elements-at-runtime",
-                "-H:+PrintImageObjectTree"
-            )
-
-        }
-    }
 }
 
 // Define the main class in the JAR manifest

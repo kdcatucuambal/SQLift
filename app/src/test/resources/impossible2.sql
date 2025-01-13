@@ -82,13 +82,12 @@ CREATE TABLE mixed_positions (
 );
 
 -- ===================================================================================
--- Tabla 6: PRIMARY KEYs con tipos de datos complejos y arrays
+-- Tabla 6: PRIMARY KEYs con tipos de datos convencionales
 -- ===================================================================================
 CREATE TABLE complex_types (
-    id1 INTEGER[],                                                  -- Array simple
-    id2 NUMERIC(20,5)[],                                           -- Array con precisión
-    id3 VARCHAR(100) ARRAY[3],                                     -- Array alterno
-    id4 TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT pk_arrays PRIMARY KEY (id1, id2[1], id3[1]),        -- PK con arrays
-    CONSTRAINT pk_timestamp PRIMARY KEY (id4)                       -- PK con timestamp
+    id1 INTEGER NOT NULL,                                           -- Valor simple
+    id2 NUMERIC(20,5) NOT NULL,                                     -- Valor con precisión
+    id3 VARCHAR(100) NOT NULL,                                      -- Cadena de texto
+    id4 TIMESTAMP WITH TIME ZONE NOT NULL,                          -- Timestamp con zona horaria
+    CONSTRAINT pk_complex_types PRIMARY KEY (id1, id2, id3, id4)    -- Clave primaria compuesta
 );

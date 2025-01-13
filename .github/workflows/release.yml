@@ -37,32 +37,23 @@ jobs:
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure build environment
+      - name: Build JAR with Gradle
         run: |
-          echo "org.gradle.caching=true" >> gradle.properties
-          echo "org.gradle.parallel=true" >> gradle.properties
-          echo "org.gradle.daemon=false" >> gradle.properties
-          echo "org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
+          ./gradlew clean build
 
       - name: Build Native Image
         run: |
-          ./gradlew clean nativeCompile --info "-PnativeImageArgs=${{ matrix.native_opts }}"
+          native-image -jar app/build/libs/app.jar -H:Name=${{ matrix.output_name }} ${{ matrix.native_opts }}
 
       - name: Strip Binary
         run: |
-          cd app/build/native/nativeCompile/
-          strip sqlift || true
-
-      - name: Rename Binary
-        run: |
-          cd app/build/native/nativeCompile/
-          mv sqlift ${{ matrix.output_name }}
+          strip ${{ matrix.output_name }} || true
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.output_name }}
-          path: app/build/native/nativeCompile/${{ matrix.output_name }}
+          path: ${{ matrix.output_name }}
           if-no-files-found: error
 
   release:
