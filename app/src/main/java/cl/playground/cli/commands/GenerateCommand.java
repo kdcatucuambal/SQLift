@@ -25,14 +25,11 @@ public class GenerateCommand {
             File yamlFile = new File(currentDir, CONFIG_FILE);
 
             if (!yamlFile.exists()) {
-                System.err.println("❌ Configuration file not found in directory: " + currentDir);
-                return;
+                throw new ConfigurationException("Configuration file not found in directory: " + currentDir);
             }
 
             Map<String, Object> context = extractConfigContext(yamlFile.getPath());
-
             String sqlContent = cl.playground.core.reader.SqlReader.readSql((String) context.get("schema"));
-
             context.put("sqlContent", sqlContent);
 
             PostgresEngine engine = new PostgresEngine();
@@ -48,9 +45,14 @@ public class GenerateCommand {
 
             System.out.println("✅ Entities generated successfully!");
 
+        } catch (ConfigurationException e) {
+            System.err.println("❌ Configuration Error: " + e.getMessage());
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("❌ Schema Error: " + e.getMessage());
+
         } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
-            throw new ConfigurationException("Failed to read configuration", e);
+            throw new ConfigurationException("An unexpected error occurred during generation", e);
         }
     }
 

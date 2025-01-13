@@ -114,9 +114,10 @@ public class SchemaProcessor {
         tables.forEach(table -> {
             table.getRelations().forEach(relation -> {
                 if (!existingTables.contains(relation.getTargetTable())) {
-                    throw new IllegalArgumentException(
-                        String.format("La tabla referenciada '%s' no existe. Referenciada desde: tabla '%s', columna '%s'.",
-                            relation.getTargetTable(), table.getTableName(), relation.getSourceColumn()));
+                    throw new IllegalArgumentException(String.format(
+                        "La tabla referenciada '%s' no existe. Referenciada desde: tabla '%s', columna '%s'.",
+                        relation.getTargetTable(), table.getTableName(), relation.getSourceColumn()
+                    ));
                 }
             });
         });
