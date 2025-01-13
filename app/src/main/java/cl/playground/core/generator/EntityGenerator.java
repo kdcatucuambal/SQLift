@@ -70,7 +70,11 @@ public class EntityGenerator {
             imports.add("import lombok.ToString;");
             imports.add("import lombok.NoArgsConstructor;");
             imports.add("import lombok.AllArgsConstructor;");
-            imports.add("import lombok.EqualsAndHashCode;");
+
+            // Solo añadir EqualsAndHashCode si se necesita una clase compuesta
+            if (needsCompositeKey(table)) {
+                imports.add("import lombok.EqualsAndHashCode;");
+            }
         }
 
         // Otros imports relacionados con JPA según el esquema
