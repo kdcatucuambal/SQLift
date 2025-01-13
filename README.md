@@ -62,26 +62,59 @@ Este método requiere Docker instalado pero ofrece mayor portabilidad.
 - Docker instalado y en ejecución
 - Permisos para ejecutar comandos Docker
 
-#### Pasos de Instalación y Uso
+---
 
-1. **Descargar la imagen:**
+### **Pasos de Instalación y Uso**
+
+#### **1. Descargar la imagen**
 
 ```bash
 docker pull ghcr.io/andressep95/sqlift-cli:latest
 ```
 
-2. **Comandos disponibles:**
+---
+
+### **Linux/macOS**
+
+#### **Inicializar configuración**
 
 ```bash
-# Inicializar configuración
 docker run --rm -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest init /workspace
+```
 
-# Generar entidades
+#### **Generar entidades**
+
+```bash
 docker run --rm -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest generate /workspace
+```
 
-# Modo interactivo
+#### **Modo interactivo**
+
+```bash
 docker run -it -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest
 ```
+
+---
+
+### **Windows (PowerShell)**
+
+#### **Inicializar configuración**
+
+```bash
+docker run --rm -v ${PWD}:/workspace ghcr.io/andressep95/sqlift-cli:latest init /workspace
+```
+
+#### **Generar entidades**
+
+```bash
+docker run --rm -v ${PWD}:/workspace ghcr.io/andressep95/sqlift-cli:latest generate /workspace
+```
+
+#### **Modo interactivo**
+
+```bash
+docker run -it -v ${PWD}:/workspace ghcr.io/andressep95/sqlift-cli:latest
+``` 
 
 ## Configuración (Común para ambos métodos)
 
