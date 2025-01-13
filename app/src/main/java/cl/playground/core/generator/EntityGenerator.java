@@ -452,7 +452,6 @@ public class EntityGenerator {
         // Mover la clase al final
         builder.append("\n    @Embeddable\n");
 
-        // Agregar anotaciones de Lombok si está habilitado
         if (useLombok) {
             builder.append("    @Getter\n");
             builder.append("    @Setter\n");
@@ -461,16 +460,16 @@ public class EntityGenerator {
             builder.append("    @AllArgsConstructor\n");
         }
 
-        builder.append("    static class ")
-            .append(className)
-            .append("Id implements Serializable {\n");
+        builder.append("    static class ").append(className).append("Id implements Serializable {\n");
 
         // Campos de la clave compuesta
         for (String primaryKey : table.getPrimaryKeys()) {
+            // Manejar el caso donde no se encuentra una columna para la clave primaria
             ColumnMetadata column = table.getColumns().stream()
                 .filter(c -> c.getColumnName().equals(primaryKey))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "No se encontró una columna para la clave primaria: " + primaryKey + " en la tabla: " + table.getTableName()));
 
             String javaType = PostgreSQLToJavaType.getJavaType(column.getColumnType());
             String fieldName = generateFieldName(primaryKey);
@@ -485,54 +484,13 @@ public class EntityGenerator {
                 .append(";\n");
         }
 
-        // Si Lombok está habilitado, no generar constructores y métodos manualmente
         if (!useLombok) {
-            // Constructor vacío
-            builder.append("\n        public ")
-                .append(className)
-                .append("Id() {}\n");
-
-            // Getters y setters
-            for (String primaryKey : table.getPrimaryKeys()) {
-                String fieldName = generateFieldName(primaryKey);
-                String capitalizedField = Character.toUpperCase(fieldName.charAt(0)) +
-                    fieldName.substring(1);
-                ColumnMetadata column = table.getColumns().stream()
-                    .filter(c -> c.getColumnName().equals(primaryKey))
-                    .findFirst()
-                    .orElseThrow();
-                String javaType = PostgreSQLToJavaType.getJavaType(column.getColumnType());
-
-                // Getter
-                builder.append("\n        public ")
-                    .append(javaType)
-                    .append(" get")
-                    .append(capitalizedField)
-                    .append("() {\n")
-                    .append("            return ")
-                    .append(fieldName)
-                    .append(";\n")
-                    .append("        }\n");
-
-                // Setter
-                builder.append("\n        public void set")
-                    .append(capitalizedField)
-                    .append("(")
-                    .append(javaType)
-                    .append(" ")
-                    .append(fieldName)
-                    .append(") {\n")
-                    .append("            this.")
-                    .append(fieldName)
-                    .append(" = ")
-                    .append(fieldName)
-                    .append(";\n")
-                    .append("        }\n");
-            }
+            builder.append("\n        public ").append(className).append("Id() {}\n");
         }
 
         builder.append("    }\n");
     }
+
 
     private void generateConstructors(TableMetadata table, String className, StringBuilder builder) {
         // Si Lombok está habilitado, no generar constructores

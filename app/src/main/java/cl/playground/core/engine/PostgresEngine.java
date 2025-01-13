@@ -25,21 +25,31 @@ public class PostgresEngine {
         List<String> columnDefinitions = new ArrayList<>();
 
         Pattern pattern = Pattern.compile(
-                "CREATE\\s+TABLE\\s+\\w+\\s*\\((.*?)\\);",
-                Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            "CREATE\\s+TABLE\\s+[\"\\w.-]+\\s*\\((.*?)\\);",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         Matcher matcher = pattern.matcher(sql);
 
         if (matcher.find()) {
             String columnsDefinition = matcher.group(1);
-            String[] lines = columnsDefinition.split(",(?![^(]*\\))");
+
+            // Limpiar comentarios
+            columnsDefinition = columnsDefinition
+                .replaceAll("/\\*.*?\\*/", "") // Eliminar comentarios multilínea
+                .replaceAll("--.*?(\\n|$)", "") // Eliminar comentarios en línea
+                .trim();
+
+            // Dividir líneas por comas, excluyendo las que están dentro de paréntesis
+            String[] lines = columnsDefinition.split(",(?![^\\(]*\\))");
 
             for (String line : lines) {
                 line = line.trim();
-                // Ignorar constraints
+                // Filtrar definiciones de restricciones y líneas vacías
                 if (!line.isEmpty() &&
-                        !line.toUpperCase().startsWith("PRIMARY") &&
-                        !line.toUpperCase().startsWith("FOREIGN") &&
-                        !line.toUpperCase().startsWith("CONSTRAINT")) {
+                    !line.toUpperCase().startsWith("PRIMARY") &&
+                    !line.toUpperCase().startsWith("FOREIGN") &&
+                    !line.toUpperCase().startsWith("CONSTRAINT") &&
+                    !line.toUpperCase().startsWith("CHECK") &&
+                    !line.toUpperCase().startsWith("UNIQUE")) {
                     columnDefinitions.add(line);
                 }
             }
@@ -49,28 +59,28 @@ public class PostgresEngine {
     }
 
     public String extractTableName(String sql) {
-        // Patrón que busca después de CREATE TABLE, ignorando espacios y
-        // mayúsculas/minúsculas
-        Pattern pattern = Pattern.compile("(?i)\\bCREATE\\s+TABLE\\s+([a-zA-Z_][a-zA-Z0-9_]*)");
+        // Patrón mejorado para capturar nombres de tablas
+        Pattern pattern = Pattern.compile("(?i)\\bCREATE\\s+TABLE\\s+([\"\\w.-]+)");
         Matcher matcher = pattern.matcher(sql);
 
         if (matcher.find()) {
-            // Retorna el nombre de la tabla encontrado (grupo 1 del matcher)
-            return matcher.group(1);
+            // Retorna el nombre de la tabla sin comillas
+            return matcher.group(1).replaceAll("^\"|\"$", "");
         }
 
         return null; // Retorna null si no encuentra ninguna tabla
     }
 
     public String extractColumnName(String columnDefinition) {
-        // Obtener la primera palabra antes de cualquier tipo de dato o constraint
-        String[] parts = columnDefinition.trim().split("\\s+");
+        // Expresión regular para capturar el nombre de la columna antes del tipo de dato o constraint
+        Pattern pattern = Pattern.compile("^\\s*\"?([\\w.-]+)\"?\\s+");
+        Matcher matcher = pattern.matcher(columnDefinition.trim());
 
-        if (parts.length > 0) {
-            return parts[0];
+        if (matcher.find()) {
+            return matcher.group(1); // Retorna el nombre de la columna sin las comillas
         }
 
-        return null;
+        return null; // Retorna null si no se encuentra
     }
 
     public String extractColumnType(String sql) {
@@ -111,22 +121,23 @@ public class PostgresEngine {
 
     public String extractDefaultValue(String columnDefinition) {
         Pattern pattern = Pattern.compile(
-                "DEFAULT\\s+(" +
-                        "true|false|" + // Booleanos
-                        "CURRENT_DATE|" + // Funciones de fecha
-                        "CURRENT_TIMESTAMP|" +
-                        "CURRENT_TIME|" +
-                        "NOW\\(\\)" +
-                        ")",
-                Pattern.CASE_INSENSITIVE);
+            "DEFAULT\\s+(" +
+                "true|false|" +                 // Booleanos
+                "'[^']*'|" +                   // Cadenas delimitadas por comillas simples
+                "\\d+(\\.\\d+)?|" +            // Números enteros y decimales
+                "[a-zA-Z_][a-zA-Z0-9_]*\\(.*?\\)|" + // Funciones con o sin argumentos, como NOW(), UUID(), etc.
+                "[a-zA-Z_][a-zA-Z0-9_]*" +     // Identificadores como CURRENT_DATE, CURRENT_TIMESTAMP
+                ")",
+            Pattern.CASE_INSENSITIVE);
 
         Matcher matcher = pattern.matcher(columnDefinition);
 
         if (matcher.find()) {
-            return matcher.group(1); // Retornamos el valor exactamente como lo encontramos
+            return matcher.group(1).trim(); // Retorna el valor encontrado, eliminando espacios adicionales
         }
         return null;
     }
+
 
     public List<String> extractPrimaryKeyColumns(String sql) {
         List<String> primaryKeys = new ArrayList<>();

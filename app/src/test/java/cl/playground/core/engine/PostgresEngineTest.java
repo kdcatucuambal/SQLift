@@ -1,5 +1,6 @@
 package cl.playground.core.engine;
 
+import cl.playground.core.model.RelationMetadata;
 import cl.playground.core.model.TableMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -526,10 +527,11 @@ class PostgresEngineTest {
 
     @Test
     void testExtractTableRelations() {
-
-        List<String> statements = engine.extractCreateTableStatements(TEST_SCHEMA_RELATIONS_IMPOSSIBLE);
+        // Obtener las sentencias CREATE TABLE del esquema de prueba
+        List<String> statements = engine.extractCreateTableStatements(TEST_SCHEMA_IMPOSSIBLE);
 
         for (String statement : statements) {
+            // Extraer el nombre de la tabla y las relaciones
             String tableName = engine.extractTableName(statement);
             List<String> relations = engine.extractTableRelations(statement);
 
@@ -540,9 +542,164 @@ class PostgresEngineTest {
             System.out.println("Relaciones encontradas: " + relations);
             System.out.println("=================================\n");
 
-            // Validar que se extrajeron relaciones correctamente
+            // Validar que la lista de relaciones no sea nula
             assertNotNull(relations, "Las relaciones no deberían ser nulas para la tabla: " + tableName);
-            relations.forEach(relation -> assertFalse(relation.isBlank(), "Una relación extraída está vacía para la tabla: " + tableName));
+
+            // Validar que las relaciones sean válidas
+            for (String relation : relations) {
+                // Separar los elementos de la relación (source -> target.table.column)
+                String[] parts = relation.split(" -> ");
+                assertEquals(2, parts.length,
+                    "El formato de la relación debería ser 'source -> target.table.column'. Relación inválida: " + relation);
+
+                // Validar el formato del source (nombre de columna)
+                String sourceColumn = parts[0];
+                assertFalse(sourceColumn.isBlank(),
+                    "El nombre de la columna fuente no debería estar vacío en la relación: " + relation);
+
+                // Validar el formato del target (tabla.columna)
+                String[] targetParts = parts[1].split("\\.");
+                assertEquals(2, targetParts.length,
+                    "El formato del objetivo debería ser 'table.column'. Relación inválida: " + relation);
+
+                String targetTable = targetParts[0];
+                String targetColumn = targetParts[1];
+                assertFalse(targetTable.isBlank(),
+                    "El nombre de la tabla objetivo no debería estar vacío en la relación: " + relation);
+                assertFalse(targetColumn.isBlank(),
+                    "El nombre de la columna objetivo no debería estar vacío en la relación: " + relation);
+            }
+
+            // Si no hay relaciones, asegurarse de que sea coherente con la declaración SQL
+            if (relations.isEmpty()) {
+                assertFalse(statement.toUpperCase().contains("FOREIGN KEY"),
+                    "Se esperaba encontrar claves foráneas, pero no se extrajeron relaciones en la tabla: " + tableName);
+            }
         }
     }
+
+    @Test
+    void testExtractTableDefinitions() {
+        List<String> statements = engine.extractCreateTableStatements(TEST_SCHEMA_IMPOSSIBLE);
+
+        for (String statement : statements) {
+            String tableName = engine.extractTableName(statement);
+            List<String> columnDefinitions = engine.extractColumnDefinitions(statement);
+
+            System.out.println("\n=================================");
+            System.out.println("Tabla: " + tableName);
+            System.out.println("---------------------------------");
+
+            // Mostrar la sentencia CREATE TABLE
+            System.out.println("Sentencia CREATE TABLE:");
+            System.out.println(statement.trim());
+            System.out.println("---------------------------------");
+
+            // Mostrar columnas encontradas
+            System.out.println("Columnas encontradas:");
+            if (columnDefinitions.isEmpty()) {
+                System.out.println("  No se encontraron columnas definidas.");
+            } else {
+                for (int i = 0; i < columnDefinitions.size(); i++) {
+                    System.out.printf("  %d. %s\n", i + 1, columnDefinitions.get(i));
+                }
+            }
+
+            System.out.println("=================================\n");
+
+            // Validaciones
+            assertNotNull(columnDefinitions, "Las columnas no deberían ser nulas para la tabla: " + tableName);
+            columnDefinitions.forEach(column ->
+                    assertFalse(column.isBlank(), "Una columna extraída está vacía para la tabla: " + tableName)
+                                     );
+        }
+    }
+
+    @Test
+    void testExtractTableDefinitionsWithColumnNames() {
+
+        List<String> statements = engine.extractCreateTableStatements(TEST_SCHEMA_IMPOSSIBLE);
+
+        for (String statement : statements) {
+            String tableName = engine.extractTableName(statement);
+            List<String> columnDefinitions = engine.extractColumnDefinitions(statement);
+
+            System.out.println("\n=================================");
+            System.out.println("Tabla: " + tableName);
+            System.out.println("---------------------------------");
+
+            // Mostrar la sentencia CREATE TABLE
+            System.out.println("Sentencia CREATE TABLE:");
+            System.out.println(statement.trim());
+            System.out.println("---------------------------------");
+
+            // Mostrar columnas encontradas con sus nombres
+            System.out.println("Columnas encontradas:");
+            if (columnDefinitions.isEmpty()) {
+                System.out.println("  No se encontraron columnas definidas.");
+            } else {
+                for (int i = 0; i < columnDefinitions.size(); i++) {
+                    String columnDefinition = columnDefinitions.get(i);
+                    String columnName = engine.extractColumnName(columnDefinition);
+                    System.out.printf("  %d. %s -> Nombre: %s\n", i + 1, columnDefinition, columnName != null ? columnName : "Desconocido");
+                }
+            }
+
+            System.out.println("=================================\n");
+
+            // Validaciones
+            assertNotNull(columnDefinitions, "Las columnas no deberían ser nulas para la tabla: " + tableName);
+            columnDefinitions.forEach(column -> {
+                assertFalse(column.isBlank(), "Una columna extraída está vacía para la tabla: " + tableName);
+                String columnName = engine.extractColumnName(column);
+                assertNotNull(columnName, "El nombre de la columna no debería ser nulo para la definición: " + column);
+            });
+        }
+    }
+
+    @Test
+    void testExtractColumnDefaults() {
+        List<String> statements = engine.extractCreateTableStatements(TEST_SCHEMA_IMPOSSIBLE);
+
+        for (String statement : statements) {
+            String tableName = engine.extractTableName(statement);
+            List<String> columnDefinitions = engine.extractColumnDefinitions(statement);
+
+            System.out.println("\n=================================");
+            System.out.println("Tabla: " + tableName);
+            System.out.println("---------------------------------");
+
+            // Mostrar la sentencia CREATE TABLE
+            System.out.println("Sentencia CREATE TABLE:");
+            System.out.println(statement.trim());
+            System.out.println("---------------------------------");
+
+            // Mostrar columnas encontradas con valores DEFAULT
+            System.out.println("Columnas con valores DEFAULT:");
+            if (columnDefinitions.isEmpty()) {
+                System.out.println("  No se encontraron columnas definidas.");
+            } else {
+                for (int i = 0; i < columnDefinitions.size(); i++) {
+                    String columnDefinition = columnDefinitions.get(i);
+                    String defaultValue = engine.extractDefaultValue(columnDefinition);
+                    System.out.printf("  %d. %s -> DEFAULT: %s\n",
+                        i + 1,
+                        columnDefinition,
+                        defaultValue != null ? defaultValue : "Sin valor por defecto");
+                }
+            }
+
+            System.out.println("=================================\n");
+
+            // Validaciones
+            assertNotNull(columnDefinitions, "Las columnas no deberían ser nulas para la tabla: " + tableName);
+            columnDefinitions.forEach(column -> {
+                String defaultValue = engine.extractDefaultValue(column);
+                if (defaultValue != null) {
+                    assertFalse(defaultValue.isBlank(), "El valor DEFAULT no debería estar vacío para la columna: " + column);
+                }
+            });
+        }
+    }
+
 }
