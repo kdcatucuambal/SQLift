@@ -292,6 +292,14 @@ public class EntityGenerator {
                 // Generar nombre del campo basado en la columna de origen
                 String fieldName = generateFieldName(relation.getSourceColumn());
 
+                // Generar nombre único para la clave foránea
+                String foreignKeyName = String.format(
+                    "fk_%s_%s_%s",
+                    table.getTableName().toLowerCase(),
+                    relation.getTargetTable().toLowerCase(),
+                    relation.getSourceColumn().toLowerCase()
+                                                     );
+
                 builder.append("    @ManyToOne\n");
 
                 if (needsCompositeKey(table)) {
@@ -305,10 +313,8 @@ public class EntityGenerator {
                     .append(relation.getSourceColumn())
                     .append("\",\n")
                     .append("        nullable = false,\n")
-                    .append("        foreignKey = @ForeignKey(name = \"fk_")
-                    .append(table.getTableName().toLowerCase())
-                    .append("_")
-                    .append(relation.getTargetTable().toLowerCase())
+                    .append("        foreignKey = @ForeignKey(name = \"")
+                    .append(foreignKeyName)
                     .append("\")\n")
                     .append("    )\n")
                     .append("    private ")
