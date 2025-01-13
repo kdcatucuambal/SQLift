@@ -226,24 +226,31 @@ public class EntityGenerator {
     public String generateClassName(String tableName) {
         // Convertir nombre_tabla a NombreTabla en singular
         String singular = tableName.toLowerCase();
+
+        // Eliminar sufijo 's' si existe
         if (singular.endsWith("s")) {
             singular = singular.substring(0, singular.length() - 1);
         }
-        // Si termina en "e" después de quitar la "s", también la quitamos
+        // Eliminar 'e' después de quitar la 's', si es necesario
         if (singular.endsWith("e")) {
             singular = singular.substring(0, singular.length() - 1);
         }
 
+        // Reemplazar caracteres no válidos como puntos, guiones o espacios
+        singular = singular.replaceAll("[^a-z0-9_]", "_");
+
+        // Dividir por guiones bajos y construir en PascalCase
         String[] parts = singular.split("_");
         StringBuilder className = new StringBuilder();
         for (String part : parts) {
             if (part.length() > 0) {
                 className.append(Character.toUpperCase(part.charAt(0)))
-                        .append(part.substring(1));
+                    .append(part.substring(1));
             }
         }
         return className.toString();
     }
+
 
     private void generateFields(TableMetadata table, StringBuilder builder) {
         Set<String> foreignKeyColumns = new HashSet<>();

@@ -256,5 +256,4 @@ class SchemaProcessorTest {
             System.out.println("=================================\n");
         }
     }
-
 }

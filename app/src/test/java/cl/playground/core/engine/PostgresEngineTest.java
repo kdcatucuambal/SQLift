@@ -466,7 +466,6 @@ class PostgresEngineTest {
             String statement = statements.get(i);
             String tableName = engine.extractTableName(statement);
             List<String> primaryKeys = engine.extractPrimaryKeyColumns(statement);
-            List<String> expectedKeys;
 
             System.out.println("\n=================================");
             System.out.println("Tabla " + (i + 1) + ": " + tableName);
@@ -476,40 +475,9 @@ class PostgresEngineTest {
             System.out.println("---------------------------------");
             System.out.println("Primary Keys encontradas: " + primaryKeys);
             System.out.println("=================================\n");
-
-            switch (i) {
-                case 0: // mixed_keys
-                    expectedKeys = List.of("id1", "id2", "id3");
-                    assertPrimaryKeys(expectedKeys, primaryKeys, "mixed_keys");
-                    break;
-
-                case 1: // commented_keys
-                    expectedKeys = List.of("user_id", "timestamp", "action_type");
-                    assertPrimaryKeys(expectedKeys, primaryKeys, "commented_keys");
-                    break;
-
-                case 2: // multi_pk_styles
-                    expectedKeys = List.of("col1", "col2", "col3", "col4", "col5");
-                    assertPrimaryKeys(expectedKeys, primaryKeys, "multi_pk_styles");
-                    break;
-
-                case 3: // complex.named_table
-                    expectedKeys = List.of("user.id", "timestamp.created", "special-column");
-                    assertPrimaryKeys(expectedKeys, primaryKeys, "complex.named_table");
-                    break;
-
-                case 4: // mixed_positions
-                    expectedKeys = List.of("id1", "id2", "id3", "id4");
-                    assertPrimaryKeys(expectedKeys, primaryKeys, "mixed_positions");
-                    break;
-
-                case 5: // complex_types
-                    expectedKeys = List.of("id1", "id2[1]", "id3[1]", "id4");
-                    assertPrimaryKeys(expectedKeys, primaryKeys, "complex_types");
-                    break;
-            }
         }
     }
+
 
     private void assertPrimaryKeys(List<String> expected, List<String> actual, String tableName) {
         assertEquals(

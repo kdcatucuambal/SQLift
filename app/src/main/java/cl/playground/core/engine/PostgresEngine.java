@@ -138,7 +138,6 @@ public class PostgresEngine {
         return null;
     }
 
-
     public List<String> extractPrimaryKeyColumns(String sql) {
         List<String> primaryKeys = new ArrayList<>();
 
@@ -159,19 +158,29 @@ public class PostgresEngine {
         while (matcher.find()) {
             if (matcher.group(1) != null) {
                 // PK simple
-                String column = matcher.group(1).trim().replaceAll("^\"|\"$", "");
-                if (!primaryKeys.contains(column)) primaryKeys.add(column);
+                String column = matcher.group(1).trim()
+                    .replaceAll("^\"|\"$", ""); // Eliminar comillas
+                if (!primaryKeys.contains(column)) {
+                    primaryKeys.add(column);
+                }
             } else if (matcher.group(2) != null) {
                 // PK compuesta
                 for (String column : matcher.group(2).split(",")) {
-                    String cleanColumn = column.trim().replaceAll("^\"|\"$", "").replaceAll("\\s+", " ");
-                    if (!primaryKeys.contains(cleanColumn)) primaryKeys.add(cleanColumn);
+                    String cleanColumn = column.trim()
+                        .replaceAll("^\"|\"$", "") // Eliminar comillas
+                        .replaceAll("\\[.*?\\]", "") // Eliminar índices como [1]
+                        .replaceAll("\\s+", " "); // Normalizar espacios
+
+                    if (!primaryKeys.contains(cleanColumn)) {
+                        primaryKeys.add(cleanColumn);
+                    }
                 }
             }
         }
 
         return primaryKeys;
     }
+
 
     public List<String> extractTableRelations(String sql) {
         List<String> relations = new ArrayList<>();
