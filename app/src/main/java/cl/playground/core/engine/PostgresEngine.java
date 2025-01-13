@@ -77,11 +77,19 @@ public class PostgresEngine {
         Matcher matcher = pattern.matcher(columnDefinition.trim());
 
         if (matcher.find()) {
-            return matcher.group(1); // Retorna el nombre de la columna sin las comillas
+            String columnName = matcher.group(1); // Capturar el nombre original de la columna
+
+            // Limpiar el nombre eliminando caracteres no válidos
+            columnName = columnName.replaceAll("[^a-zA-Z0-9_]", "_"); // Reemplazar caracteres no válidos con guiones bajos
+            columnName = columnName.replaceAll("_+", "_"); // Consolidar guiones bajos consecutivos
+            columnName = columnName.replaceAll("^_+|_+$", ""); // Eliminar guiones bajos iniciales o finales
+
+            return columnName; // Retornar el nombre limpio y validado
         }
 
-        return null; // Retorna null si no se encuentra
+        return null; // Retornar null si no se encuentra un nombre válido
     }
+
 
     public String extractColumnType(String sql) {
         // Eliminar comentarios SQL si existen
@@ -142,8 +150,8 @@ public class PostgresEngine {
         List<String> primaryKeys = new ArrayList<>();
 
         // Limpiar comentarios y procesar todo en una sola pasada
-        String cleanSql = sql.replaceAll("--[^\\n]*", "")
-            .replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", " ");
+        String cleanSql = sql.replaceAll("--[^\\n]*", "") // Eliminar comentarios en línea
+            .replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", " "); // Eliminar comentarios en bloque
 
         Pattern pkPattern = Pattern.compile(
             // Captura PKs simples
@@ -159,7 +167,12 @@ public class PostgresEngine {
             if (matcher.group(1) != null) {
                 // PK simple
                 String column = matcher.group(1).trim()
-                    .replaceAll("^\"|\"$", ""); // Eliminar comillas
+                    .replaceAll("^\"|\"$", "") // Eliminar comillas
+                    .replaceAll("\\[.*?\\]", "") // Eliminar índices como [1]
+                    .replaceAll("[^a-zA-Z0-9_]", "_") // Reemplazar caracteres especiales por guiones bajos
+                    .replaceAll("_+", "_") // Consolidar guiones bajos consecutivos
+                    .replaceAll("^_+|_+$", "") // Eliminar guiones bajos iniciales o finales
+                    .toLowerCase(); // Convertir a minúsculas
                 if (!primaryKeys.contains(column)) {
                     primaryKeys.add(column);
                 }
@@ -169,8 +182,10 @@ public class PostgresEngine {
                     String cleanColumn = column.trim()
                         .replaceAll("^\"|\"$", "") // Eliminar comillas
                         .replaceAll("\\[.*?\\]", "") // Eliminar índices como [1]
-                        .replaceAll("\\s+", " "); // Normalizar espacios
-
+                        .replaceAll("[^a-zA-Z0-9_]", "_") // Reemplazar caracteres especiales por guiones bajos
+                        .replaceAll("_+", "_") // Consolidar guiones bajos consecutivos
+                        .replaceAll("^_+|_+$", "") // Eliminar guiones bajos iniciales o finales
+                        .toLowerCase(); // Convertir a minúsculas
                     if (!primaryKeys.contains(cleanColumn)) {
                         primaryKeys.add(cleanColumn);
                     }

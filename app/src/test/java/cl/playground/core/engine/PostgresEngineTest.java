@@ -478,21 +478,6 @@ class PostgresEngineTest {
         }
     }
 
-
-    private void assertPrimaryKeys(List<String> expected, List<String> actual, String tableName) {
-        assertEquals(
-            expected.size(),
-            actual.size(),
-            String.format("Tabla %s: Número incorrecto de PKs.", tableName)
-                    );
-
-        assertTrue(
-            new HashSet<>(actual).containsAll(expected),
-            String.format("Tabla %s: No se encontraron todas las PKs esperadas.\nEsperadas: %s\nEncontradas: %s",
-                tableName, expected, actual)
-                  );
-    }
-
     @Test
     void testExtractTableRelations() {
         // Obtener las sentencias CREATE TABLE del esquema de prueba

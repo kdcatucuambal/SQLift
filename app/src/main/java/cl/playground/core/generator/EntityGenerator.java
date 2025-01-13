@@ -224,30 +224,29 @@ public class EntityGenerator {
     }
 
     public String generateClassName(String tableName) {
-        // Convertir nombre_tabla a NombreTabla en singular
-        String singular = tableName.toLowerCase();
+        // Normalizar el nombre: eliminar caracteres no válidos
+        String sanitized = tableName.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
 
-        // Eliminar sufijo 's' si existe
-        if (singular.endsWith("s")) {
-            singular = singular.substring(0, singular.length() - 1);
-        }
-        // Eliminar 'e' después de quitar la 's', si es necesario
-        if (singular.endsWith("e")) {
-            singular = singular.substring(0, singular.length() - 1);
+        // Convertir a singular si termina en 's'
+        if (sanitized.endsWith("s")) {
+            sanitized = sanitized.substring(0, sanitized.length() - 1);
         }
 
-        // Reemplazar caracteres no válidos como puntos, guiones o espacios
-        singular = singular.replaceAll("[^a-z0-9_]", "_");
-
-        // Dividir por guiones bajos y construir en PascalCase
-        String[] parts = singular.split("_");
+        // Transformar a PascalCase
+        String[] parts = sanitized.split("_");
         StringBuilder className = new StringBuilder();
         for (String part : parts) {
-            if (part.length() > 0) {
+            if (!part.isEmpty()) {
                 className.append(Character.toUpperCase(part.charAt(0)))
                     .append(part.substring(1));
             }
         }
+
+        // Validar para evitar truncamiento al final
+        if (className.toString().endsWith("l")) {
+            className.append("e");
+        }
+
         return className.toString();
     }
 

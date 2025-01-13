@@ -31,7 +31,7 @@ public class InitCommand {
             
             A tool to generate Java entity classes from SQL schema files.
             
-            ## Configuration File Structure (sqlift.yml)
+            ## Configuration File Structure (sqlift.yaml)
             
             ```yaml
             version: "1.0"              # Version number (required)

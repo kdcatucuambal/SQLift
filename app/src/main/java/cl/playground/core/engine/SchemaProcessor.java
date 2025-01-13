@@ -100,7 +100,27 @@ public class SchemaProcessor {
             }
         });
 
+        // Validar relaciones de claves foráneas
+        validateForeignKeys(tables);
+
         return tables;
     }
 
+    private void validateForeignKeys(List<TableMetadata> tables) {
+        // Obtener los nombres de las tablas existentes
+        List<String> existingTables = tables.stream()
+            .map(TableMetadata::getTableName)
+            .collect(Collectors.toList());
+
+        // Validar cada relación
+        tables.forEach(table -> {
+            table.getRelations().forEach(relation -> {
+                if (!existingTables.contains(relation.getTargetTable())) {
+                    throw new IllegalArgumentException(
+                        String.format("La tabla referenciada '%s' no existe. Referenciada desde: tabla '%s', columna '%s'.",
+                            relation.getTargetTable(), table.getTableName(), relation.getSourceColumn()));
+                }
+            });
+        });
+    }
 }
