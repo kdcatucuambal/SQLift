@@ -70,6 +70,7 @@ public class EntityGenerator {
             imports.add("import lombok.ToString;");
             imports.add("import lombok.NoArgsConstructor;");
             imports.add("import lombok.AllArgsConstructor;");
+            imports.add("import lombok.EqualsAndHashCode;");
         }
 
         // Otros imports relacionados con JPA según el esquema
@@ -455,7 +456,7 @@ public class EntityGenerator {
     private void generateCompositeKeyClass(TableMetadata table, StringBuilder builder) {
         String className = generateClassName(table.getTableName());
 
-        // Mover la clase al final
+        // Inicia la clase embebida
         builder.append("\n    @Embeddable\n");
 
         if (useLombok) {
@@ -464,13 +465,13 @@ public class EntityGenerator {
             builder.append("    @ToString\n");
             builder.append("    @NoArgsConstructor\n");
             builder.append("    @AllArgsConstructor\n");
+            builder.append("    @EqualsAndHashCode\n"); // Usa Lombok para generar equals() y hashCode()
         }
 
         builder.append("    static class ").append(className).append("Id implements Serializable {\n");
 
-        // Campos de la clave compuesta
+        // Genera los campos de la clave compuesta
         for (String primaryKey : table.getPrimaryKeys()) {
-            // Manejar el caso donde no se encuentra una columna para la clave primaria
             ColumnMetadata column = table.getColumns().stream()
                 .filter(c -> c.getColumnName().equals(primaryKey))
                 .findFirst()
@@ -490,13 +491,49 @@ public class EntityGenerator {
                 .append(";\n");
         }
 
+        // Genera equals() y hashCode() si Lombok no está habilitado
         if (!useLombok) {
-            builder.append("\n        public ").append(className).append("Id() {}\n");
+            // Generar equals()
+            builder.append("\n        @Override\n")
+                .append("        public boolean equals(Object o) {\n")
+                .append("            if (this == o) return true;\n")
+                .append("            if (o == null || getClass() != o.getClass()) return false;\n")
+                .append("            ")
+                .append(className).append("Id that = (").append(className).append("Id) o;\n")
+                .append("            return ");
+
+            for (int i = 0; i < table.getPrimaryKeys().size(); i++) {
+                String fieldName = generateFieldName(table.getPrimaryKeys().get(i));
+                builder.append("java.util.Objects.equals(").append(fieldName).append(", that.").append(fieldName).append(")");
+                if (i < table.getPrimaryKeys().size() - 1) {
+                    builder.append(" && ");
+                } else {
+                    builder.append(";\n");
+                }
+            }
+
+            builder.append("        }\n");
+
+            // Generar hashCode()
+            builder.append("\n        @Override\n")
+                .append("        public int hashCode() {\n")
+                .append("            return java.util.Objects.hash(");
+
+            for (int i = 0; i < table.getPrimaryKeys().size(); i++) {
+                String fieldName = generateFieldName(table.getPrimaryKeys().get(i));
+                builder.append(fieldName);
+                if (i < table.getPrimaryKeys().size() - 1) {
+                    builder.append(", ");
+                } else {
+                    builder.append(");\n");
+                }
+            }
+
+            builder.append("        }\n");
         }
 
         builder.append("    }\n");
     }
-
 
     private void generateConstructors(TableMetadata table, String className, StringBuilder builder) {
         // Si Lombok está habilitado, no generar constructores
