@@ -251,7 +251,6 @@ public class EntityGenerator {
         return className.toString();
     }
 
-
     private void generateFields(TableMetadata table, StringBuilder builder) {
         Set<String> foreignKeyColumns = new HashSet<>();
         Set<String> processedOneToManyFields = new HashSet<>();
@@ -291,26 +290,7 @@ public class EntityGenerator {
 
             if (relation.isManyToOne()) {
                 // Generar nombre del campo basado en la columna de origen
-                String fieldName;
-                if (relation.getSourceColumn().contains("_")) {
-                    String[] parts = relation.getSourceColumn().split("_id")[0].split("_");
-                    if (parts.length > 1) {
-                        // Para casos como "sucursal_origen_id" -> "sucursalOrigen"
-                        StringBuilder fieldNameBuilder = new StringBuilder(parts[0]);
-                        for (int i = 1; i < parts.length; i++) {
-                            fieldNameBuilder.append(Character.toUpperCase(parts[i].charAt(0)))
-                                .append(parts[i].substring(1));
-                        }
-                        fieldName = fieldNameBuilder.toString();
-                    } else {
-                        fieldName = generateFieldName(relation.getTargetTable());
-                    }
-                } else {
-                    fieldName = generateFieldName(relation.getTargetTable());
-                    if (fieldName.endsWith("s")) {
-                        fieldName = fieldName.substring(0, fieldName.length() - 1);
-                    }
-                }
+                String fieldName = generateFieldName(relation.getSourceColumn());
 
                 builder.append("    @ManyToOne\n");
 
@@ -337,19 +317,17 @@ public class EntityGenerator {
                     .append(fieldName)
                     .append(";\n\n");
             } else {
-                String fieldName = generateFieldName(relation.getTargetTable());
-                String pluralFieldName = toPlural(fieldName);
+                // Relaciones OneToMany
+                String pluralFieldName = toPlural(generateFieldName(relation.getTargetTable()));
+
                 if (!processedOneToManyFields.contains(pluralFieldName)) {
                     processedOneToManyFields.add(pluralFieldName);
 
-                    String targetFieldName = generateFieldName(table.getTableName());
-                    if (targetFieldName.endsWith("s")) {
-                        targetFieldName = targetFieldName.substring(0, targetFieldName.length() - 1);
-                    }
+                    String targetFieldName = generateFieldName(relation.getTargetColumn());
 
                     builder.append("    @OneToMany(\n")
                         .append("        mappedBy = \"")
-                        .append(targetFieldName)
+                        .append(targetFieldName) // Usar el campo relacionado en la clase destino
                         .append("\",\n")
                         .append("        cascade = CascadeType.ALL,\n")
                         .append("        orphanRemoval = true\n")

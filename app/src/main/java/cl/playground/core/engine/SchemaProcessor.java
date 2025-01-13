@@ -64,28 +64,26 @@ public class SchemaProcessor {
 
             // Procesar relaciones directas
             List<RelationMetadata> relations = new ArrayList<>();
-            engine.extractTableRelations(statement).forEach(relationString -> {
-                String[] parts = relationString.split(" -> ");
-                String[] targetParts = parts[1].split("\\.");
-                String sourceColumn = parts[0].toLowerCase();
-                String targetTable = targetParts[0].toLowerCase();
-                String targetColumn = targetParts[1].toLowerCase();
+            engine.extractTableRelations(statement).forEach(relation -> {
+                String sourceColumn = relation.getSourceColumn().toLowerCase();
+                String targetTable = relation.getTargetTable().toLowerCase();
+                String targetColumn = relation.getTargetColumn().toLowerCase();
 
                 // Agregar relación directa
                 relations.add(new RelationMetadata(
                     sourceColumn,
                     targetTable,
                     targetColumn,
-                    true));
+                    relation.isManyToOne()));
 
-                // Registrar relación inversa
+                // Registrar relación inversa (One-to-Many)
                 inverseRelationsMap
                     .computeIfAbsent(targetTable, k -> new ArrayList<>())
                     .add(new RelationMetadata(
                         targetColumn,
                         tableName,
                         sourceColumn,
-                        false));
+                        !relation.isManyToOne())); // Relación inversa cambia el tipo
             });
             table.setRelations(relations);
             tables.add(table);

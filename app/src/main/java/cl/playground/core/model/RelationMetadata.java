@@ -50,6 +50,19 @@ public class RelationMetadata {
         isManyToOne = manyToOne;
     }
 
+    public String getMappedByField() {
+        String[] parts = targetColumn.split("_");
+        StringBuilder fieldName = new StringBuilder(parts[0]);
+
+        for (int i = 1; i < parts.length; i++) {
+            fieldName.append(Character.toUpperCase(parts[i].charAt(0)))
+                .append(parts[i].substring(1));
+        }
+
+        return fieldName.toString();
+    }
+
+
     @Override
     public String toString() {
         return "RelationMetadata{" +

@@ -486,41 +486,41 @@ class PostgresEngineTest {
         for (String statement : statements) {
             // Extraer el nombre de la tabla y las relaciones
             String tableName = engine.extractTableName(statement);
-            List<String> relations = engine.extractTableRelations(statement);
+            List<RelationMetadata> relations = engine.extractTableRelations(statement);
 
             System.out.println("\n=================================");
             System.out.println("Evaluando sentencia: \n" + statement.trim());
             System.out.println("---------------------------------");
             System.out.println("Tabla: " + tableName);
-            System.out.println("Relaciones encontradas: " + relations);
+            System.out.println("Relaciones encontradas: ");
+            for (RelationMetadata relation : relations) {
+                System.out.println(relation);
+            }
             System.out.println("=================================\n");
 
             // Validar que la lista de relaciones no sea nula
             assertNotNull(relations, "Las relaciones no deberían ser nulas para la tabla: " + tableName);
 
             // Validar que las relaciones sean válidas
-            for (String relation : relations) {
-                // Separar los elementos de la relación (source -> target.table.column)
-                String[] parts = relation.split(" -> ");
-                assertEquals(2, parts.length,
-                    "El formato de la relación debería ser 'source -> target.table.column'. Relación inválida: " + relation);
-
-                // Validar el formato del source (nombre de columna)
-                String sourceColumn = parts[0];
-                assertFalse(sourceColumn.isBlank(),
+            for (RelationMetadata relation : relations) {
+                // Validar que sourceColumn no esté vacío
+                assertFalse(relation.getSourceColumn().isBlank(),
                     "El nombre de la columna fuente no debería estar vacío en la relación: " + relation);
 
-                // Validar el formato del target (tabla.columna)
-                String[] targetParts = parts[1].split("\\.");
-                assertEquals(2, targetParts.length,
-                    "El formato del objetivo debería ser 'table.column'. Relación inválida: " + relation);
-
-                String targetTable = targetParts[0];
-                String targetColumn = targetParts[1];
-                assertFalse(targetTable.isBlank(),
+                // Validar que targetTable no esté vacío
+                assertFalse(relation.getTargetTable().isBlank(),
                     "El nombre de la tabla objetivo no debería estar vacío en la relación: " + relation);
-                assertFalse(targetColumn.isBlank(),
+
+                // Validar que targetColumn no esté vacío
+                assertFalse(relation.getTargetColumn().isBlank(),
                     "El nombre de la columna objetivo no debería estar vacío en la relación: " + relation);
+
+                // Validar que el tipo de relación (ManyToOne o OneToMany) sea correcto
+                if (relation.isManyToOne()) {
+                    System.out.println("Relación Many-to-One detectada: " + relation);
+                } else {
+                    System.out.println("Relación One-to-Many detectada: " + relation);
+                }
             }
 
             // Si no hay relaciones, asegurarse de que sea coherente con la declaración SQL

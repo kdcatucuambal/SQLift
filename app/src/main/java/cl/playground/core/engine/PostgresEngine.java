@@ -1,5 +1,7 @@
 package cl.playground.core.engine;
 
+import cl.playground.core.model.RelationMetadata;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,7 +91,6 @@ public class PostgresEngine {
 
         return null; // Retornar null si no se encuentra un nombre válido
     }
-
 
     public String extractColumnType(String sql) {
         // Eliminar comentarios SQL si existen
@@ -196,9 +197,8 @@ public class PostgresEngine {
         return primaryKeys;
     }
 
-
-    public List<String> extractTableRelations(String sql) {
-        List<String> relations = new ArrayList<>();
+    public List<RelationMetadata> extractTableRelations(String sql) {
+        List<RelationMetadata> relations = new ArrayList<>();
 
         // Limpiar comentarios
         String cleanSql = sql.replaceAll("--[^\\n]*", "")
@@ -223,10 +223,12 @@ public class PostgresEngine {
                 String sourceColumn = matcher.group(1).trim().replaceAll("^\"|\"$", "");
                 String targetTable = matcher.group(2).trim().replaceAll("^\"|\"$", "");
                 String targetColumn = matcher.group(3).trim().replaceAll("^\"|\"$", "");
-                relations.add(String.format("%s -> %s.%s",
-                    sourceColumn.replaceAll("\\s+", " "),
-                    targetTable.replaceAll("\\s+", " "),
-                    targetColumn.replaceAll("\\s+", " ")));
+                relations.add(new RelationMetadata(
+                    sourceColumn,
+                    targetTable,
+                    targetColumn,
+                    true // Many-to-One asumido para este caso
+                ));
             } else if (matcher.group(4) != null) {
                 // FK con CONSTRAINT
                 String[] sourceColumns = matcher.group(4).split(",");
@@ -237,10 +239,12 @@ public class PostgresEngine {
                 for (int i = 0; i < sourceColumns.length && i < targetColumns.length; i++) {
                     String sourceColumn = sourceColumns[i].trim().replaceAll("^\"|\"$", "");
                     String targetColumn = targetColumns[i].trim().replaceAll("^\"|\"$", "");
-                    relations.add(String.format("%s -> %s.%s",
-                        sourceColumn.replaceAll("\\s+", " "),
-                        targetTable.replaceAll("\\s+", " "),
-                        targetColumn.replaceAll("\\s+", " ")));
+                    relations.add(new RelationMetadata(
+                        sourceColumn,
+                        targetTable,
+                        targetColumn,
+                        true // Many-to-One asumido para este caso
+                    ));
                 }
             }
         }
