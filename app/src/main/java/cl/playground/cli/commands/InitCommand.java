@@ -8,7 +8,7 @@ public class InitCommand {
     public void run() {
         generateYamlFile();
         generateReadmeFile();
-        System.out.println("✅ sqlift.yaml and README.md files generated successfully");
+        System.out.println("✅ sqlift.yaml and sqlift.md files generated successfully");
     }
 
     private void generateYamlFile() {
@@ -16,9 +16,9 @@ public class InitCommand {
             version: "1.0"
             sql:
               engine: "postgres"
-              schema: "path/to/your/schema.sql"
+              schema: "schema.sql"
               output:
-                package: "com.example.entities"
+                package: "com.example.project.target"
                 lombok: true
             """;
 
@@ -34,15 +34,13 @@ public class InitCommand {
             ## Configuration File Structure (sqlift.yaml)
             
             ```yaml
-            version: "1.0"              # Version number (required)
-            
+            version: "1.0"
             sql:
-              engine: "postgres"        # Database engine: postgres, mysql (required)
-              schema: "schema.sql"      # Path to your SQL schema file (required)
+              engine: "postgres"  # Motor de base de datos
+              schema: "schema.sql"  # Ruta al archivo de esquema SQL
               output:
-                package: "com.example"  # Base package for generated entities (required)
-                lombok: true           # Use Lombok annotations (optional)
-                jpa: "jakarta"         # JPA annotations style: jakarta/javax (optional)
+                package: "com.example.project.target"  # Paquete base para las entidades
+                lombok: true  # Activar/desactivar anotaciones de Lombok
             ```
             """;
 
