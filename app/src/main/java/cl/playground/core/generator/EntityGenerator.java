@@ -218,11 +218,6 @@ public class EntityGenerator {
         // Normalizar el nombre: eliminar caracteres no válidos
         String sanitized = tableName.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
 
-        // Convertir a singular si termina en 's'
-        if (sanitized.endsWith("s")) {
-            sanitized = sanitized.substring(0, sanitized.length() - 1);
-        }
-
         // Transformar a PascalCase
         String[] parts = sanitized.split("_");
         StringBuilder className = new StringBuilder();
@@ -231,11 +226,6 @@ public class EntityGenerator {
                 className.append(Character.toUpperCase(part.charAt(0)))
                     .append(part.substring(1));
             }
-        }
-
-        // Validar para evitar truncamiento al final
-        if (className.toString().endsWith("l")) {
-            className.append("e");
         }
 
         return className.toString();
