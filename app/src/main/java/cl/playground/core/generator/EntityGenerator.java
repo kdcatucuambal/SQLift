@@ -5,10 +5,7 @@ import cl.playground.core.model.ColumnMetadata;
 import cl.playground.core.model.RelationMetadata;
 import cl.playground.core.types.PostgreSQLToJavaType;
 
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class EntityGenerator {
@@ -375,42 +372,37 @@ public class EntityGenerator {
         String[] parts = columnName.toLowerCase().split("_");
         StringBuilder fieldName = new StringBuilder();
 
-        // 2. Manejar el caso especial de ID
-        boolean isIdField = false;
-        if (parts.length > 0) {
-            if (parts[parts.length - 1].equals("id")) {
-                isIdField = true;
-                if (parts.length == 1) {
-                    return "id";
-                }
-            }
+        // 2. Determinar si es un campo ID
+        boolean isIdField = parts.length > 0 && parts[parts.length - 1].equals("id");
+
+        // 3. Si es solo "id", retornar directamente
+        if (parts.length == 1 && isIdField) {
+            return "id";
         }
 
-        // 3. Construir el nombre del campo en camelCase
+        // 4. Construir el nombre del campo
         for (int i = 0; i < parts.length; i++) {
             String part = parts[i];
 
-            // Saltar "id" si es el último elemento y el campo es un ID
-            if (isIdField && i == parts.length - 1) {
+            // Ignorar la parte "id" si es el último elemento y el campo es un ID
+            if (i == parts.length - 1 && isIdField) {
                 continue;
             }
 
             if (i == 0) {
-                // Primera palabra siempre en minúscula y en singular
-                String singularPart = toSingular(part);
-                fieldName.append(singularPart);
+                // Primera palabra en minúscula
+                fieldName.append(part);
             } else {
                 // Capitalizar las siguientes palabras
-                if (part.length() > 0) {
-                    String singularPart = toSingular(part);
-                    fieldName.append(Character.toUpperCase(singularPart.charAt(0)))
-                            .append(singularPart.substring(1));
+                if (!part.isEmpty()) {
+                    fieldName.append(Character.toUpperCase(part.charAt(0)))
+                        .append(part.substring(1));
                 }
             }
         }
 
-        // 4. Agregar el sufijo "Id" si es un campo de ID
-        if (isIdField) {
+        // 5. Agregar el sufijo "Id" si es un campo de ID foráneo
+        if (isIdField && parts.length > 1) {
             fieldName.append("Id");
         }
 
@@ -516,9 +508,10 @@ public class EntityGenerator {
         if (needsCompositeKey(table)) {
             constructorParams.add(className + "Id id");
 
+            // Agregar campos no-FK y no-PK
             for (ColumnMetadata column : table.getColumns()) {
                 boolean isForeignKey = table.getRelations().stream()
-                        .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
+                    .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
                 if (!table.getPrimaryKeys().contains(column.getColumnName()) && !isForeignKey) {
                     String javaType = PostgreSQLToJavaType.getJavaType(column.getColumnType());
                     String fieldName = generateFieldName(column.getColumnName());
@@ -526,10 +519,11 @@ public class EntityGenerator {
                 }
             }
 
+            // Agregar campos FK (relaciones ManyToOne)
             for (RelationMetadata relation : table.getRelations()) {
                 if (relation.isManyToOne()) {
                     String targetClass = generateClassName(relation.getTargetTable());
-                    String fieldName = generateFieldName(relation.getTargetTable());
+                    String fieldName = generateFieldName(relation.getSourceColumn());
                     constructorParams.add(targetClass + " " + fieldName);
                 }
             }
@@ -539,18 +533,28 @@ public class EntityGenerator {
 
             builder.append("        this.id = id;\n");
 
+            // Asignar campos no-FK y no-PK
             for (ColumnMetadata column : table.getColumns()) {
                 boolean isForeignKey = table.getRelations().stream()
-                        .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
+                    .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
                 if (!table.getPrimaryKeys().contains(column.getColumnName()) && !isForeignKey) {
                     String fieldName = generateFieldName(column.getColumnName());
                     builder.append("        this.").append(fieldName).append(" = ").append(fieldName).append(";\n");
                 }
             }
+
+            // Asignar campos FK
+            for (RelationMetadata relation : table.getRelations()) {
+                if (relation.isManyToOne()) {
+                    String fieldName = generateFieldName(relation.getSourceColumn());
+                    builder.append("        this.").append(fieldName).append(" = ").append(fieldName).append(";\n");
+                }
+            }
         } else {
+            // Agregar campos no-FK
             for (ColumnMetadata column : table.getColumns()) {
                 boolean isForeignKey = table.getRelations().stream()
-                        .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
+                    .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
                 if (!isForeignKey) {
                     String javaType = PostgreSQLToJavaType.getJavaType(column.getColumnType());
                     String fieldName = generateFieldName(column.getColumnName());
@@ -558,10 +562,11 @@ public class EntityGenerator {
                 }
             }
 
+            // Agregar campos FK (relaciones ManyToOne)
             for (RelationMetadata relation : table.getRelations()) {
                 if (relation.isManyToOne()) {
                     String targetClass = generateClassName(relation.getTargetTable());
-                    String fieldName = generateFieldName(relation.getTargetTable());
+                    String fieldName = generateFieldName(relation.getSourceColumn());
                     constructorParams.add(targetClass + " " + fieldName);
                 }
             }
@@ -569,11 +574,20 @@ public class EntityGenerator {
             builder.append(String.join(", ", constructorParams));
             builder.append(") {\n");
 
+            // Asignar campos no-FK
             for (ColumnMetadata column : table.getColumns()) {
                 boolean isForeignKey = table.getRelations().stream()
-                        .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
+                    .anyMatch(rel -> rel.getSourceColumn().equals(column.getColumnName()) && rel.isManyToOne());
                 if (!isForeignKey) {
                     String fieldName = generateFieldName(column.getColumnName());
+                    builder.append("        this.").append(fieldName).append(" = ").append(fieldName).append(";\n");
+                }
+            }
+
+            // Asignar campos FK
+            for (RelationMetadata relation : table.getRelations()) {
+                if (relation.isManyToOne()) {
+                    String fieldName = generateFieldName(relation.getSourceColumn());
                     builder.append("        this.").append(fieldName).append(" = ").append(fieldName).append(";\n");
                 }
             }
@@ -639,19 +653,23 @@ public class EntityGenerator {
     }
 
     // Nuevo método auxiliar para generar getters y setters de relaciones
+    // Para las colecciones en Tenant
     private void generateRelationGettersAndSetters(TableMetadata table, StringBuilder builder) {
+        Set<String> processedFields = new HashSet<>();
+
         for (RelationMetadata relation : table.getRelations()) {
-            String fieldName = generateFieldName(relation.getTargetTable());
             String targetClass = generateClassName(relation.getTargetTable());
 
             if (relation.isManyToOne()) {
-                if (fieldName.endsWith("s")) {
-                    fieldName = fieldName.substring(0, fieldName.length() - 1);
-                }
+                String fieldName = generateFieldName(relation.getSourceColumn());
                 generateRelationGetterAndSetter(fieldName, targetClass, false, builder);
             } else {
-                String pluralField = toPlural(fieldName);
-                generateRelationGetterAndSetter(pluralField, targetClass, true, builder);
+                // Para OneToMany usar el nombre en plural de la clase objetivo
+                String pluralField = toPlural(relation.getTargetTable().toLowerCase());
+                if (!processedFields.contains(pluralField)) {
+                    processedFields.add(pluralField);
+                    generateRelationGetterAndSetter(pluralField, targetClass, true, builder);
+                }
             }
         }
     }
@@ -696,11 +714,28 @@ public class EntityGenerator {
     }
 
     public String toPlural(String input) {
-        if (input == null || input.isEmpty() || input.endsWith("s")) {
+        if (input == null || input.isEmpty()) {
             return input;
         }
 
-        // Reglas básicas de pluralización
+        // Casos especiales en inglés para términos comunes en programación
+        Map<String, String> specialCases = new HashMap<>();
+        specialCases.put("user", "users");
+        specialCases.put("person", "people");
+        specialCases.put("child", "children");
+        // Agregar más casos especiales según sea necesario
+
+        // Revisar si es un caso especial
+        if (specialCases.containsKey(input.toLowerCase())) {
+            return specialCases.get(input.toLowerCase());
+        }
+
+        // Si ya termina en s, retornar como está
+        if (input.endsWith("s")) {
+            return input;
+        }
+
+        // Reglas para español
         if (input.endsWith("z")) {
             return input.substring(0, input.length() - 1) + "ces";
         }
@@ -713,5 +748,4 @@ public class EntityGenerator {
 
         // Regla por defecto
         return input + "s";
-    }
-}
+    }}
