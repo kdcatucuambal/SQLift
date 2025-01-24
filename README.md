@@ -126,7 +126,7 @@ sql:
   engine: "postgres"  # Motor de base de datos
   schema: "schema.sql"  # Ruta al archivo de esquema SQL
   output:
-    package: "cl.playground.SpringSecurityBackend.model"  # Paquete base para las entidades
+    package: "cl.playground.projectname.target"  # Paquete base para las entidades
     lombok: true  # Activar/desactivar anotaciones de Lombok
 ```
 
