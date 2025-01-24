@@ -19,7 +19,7 @@ class EntityGeneratorTest {
     @Test
     public void testEntityGeneration() throws IOException, URISyntaxException {
         // 1. Leer el schema SQL desde los recursos de prueba
-        URL resourceUrl = getClass().getClassLoader().getResource("tenant.sql");
+        URL resourceUrl = getClass().getClassLoader().getResource("schema2.sql");
         if (resourceUrl == null) {
             fail("No se pudo encontrar el archivo schema.sql en los recursos de prueba");
         }

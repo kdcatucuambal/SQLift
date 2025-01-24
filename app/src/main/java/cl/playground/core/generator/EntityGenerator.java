@@ -677,7 +677,9 @@ public class EntityGenerator {
     // Nuevo método auxiliar para generar getter y setter de una relación
     private void generateRelationGetterAndSetter(String fieldName, String targetClass, boolean isCollection,
             StringBuilder builder) {
-        String capitalizedField = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+        String capitalizedField = Arrays.stream(fieldName.split("_"))
+            .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
+            .collect(Collectors.joining());
         String type = isCollection ? "Set<" + targetClass + ">" : targetClass;
 
         // Getter
