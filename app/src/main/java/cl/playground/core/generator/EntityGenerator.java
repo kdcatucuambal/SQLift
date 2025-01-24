@@ -680,19 +680,24 @@ public class EntityGenerator {
         String capitalizedField = Arrays.stream(fieldName.split("_"))
             .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
             .collect(Collectors.joining());
+
+        String camelCaseField = Character.toLowerCase(capitalizedField.charAt(0)) +
+            (capitalizedField.length() > 1 ? capitalizedField.substring(1) : "");
+
+
         String type = isCollection ? "Set<" + targetClass + ">" : targetClass;
 
         // Getter
         builder.append("    public ").append(type).append(" get")
                 .append(capitalizedField).append("() {\n")
-                .append("        return ").append(fieldName).append(";\n")
+                .append("        return ").append(camelCaseField).append(";\n")
                 .append("    }\n\n");
 
         // Setter
         builder.append("    public void set").append(capitalizedField)
-                .append("(").append(type).append(" ").append(fieldName).append(") {\n")
-                .append("        this.").append(fieldName).append(" = ")
-                .append(fieldName).append(";\n")
+                .append("(").append(type).append(" ").append(camelCaseField).append(") {\n")
+                .append("        this.").append(camelCaseField).append(" = ")
+                .append(camelCaseField).append(";\n")
                 .append("    }\n\n");
     }
 
