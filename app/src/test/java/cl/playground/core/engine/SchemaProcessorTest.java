@@ -3,7 +3,6 @@ package cl.playground.core.engine;
 import cl.playground.core.model.ColumnMetadata;
 import cl.playground.core.model.RelationMetadata;
 import cl.playground.core.model.TableMetadata;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

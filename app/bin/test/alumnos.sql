@@ -1,0 +1,13 @@
+CREATE TABLE Alumno (
+    id SERIAL PRIMARY KEY,
+    rut VARCHAR(50) NOT NULL UNIQUE,
+    nombre VARCHAR(100) NOT NULL,
+    direccion VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Materia (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    alumno_id INT,
+    FOREIGN KEY (alumno_id) REFERENCES Alumno(id) ON DELETE CASCADE
+);

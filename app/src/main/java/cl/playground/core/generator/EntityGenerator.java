@@ -1,5 +1,6 @@
 package cl.playground.core.generator;
 
+import cl.playground.core.generator.factory.ImportGenerator;
 import cl.playground.core.model.TableMetadata;
 import cl.playground.core.model.ColumnMetadata;
 import cl.playground.core.model.RelationMetadata;
@@ -11,9 +12,11 @@ import java.util.stream.Collectors;
 public class EntityGenerator {
 
     private boolean useLombok;
+    private final ImportGenerator importGenerator;
 
     public EntityGenerator(boolean useLombok) {
         this.useLombok = useLombok;
+        this.importGenerator = new ImportGenerator(useLombok);
     }
 
     public String generateEntity(TableMetadata table, String packageName) {
@@ -23,7 +26,8 @@ public class EntityGenerator {
         entityBuilder.append("package ").append(packageName).append(";\n\n");
 
         // 1. Generar imports
-        generateImports(table, entityBuilder);
+        //generateImports(table, entityBuilder);
+        importGenerator.generateImports(table, entityBuilder);
 
         // 2. Generar anotaciones de clase
         generateClassAnnotations(table, entityBuilder);
@@ -699,25 +703,6 @@ public class EntityGenerator {
                 .append("        this.").append(camelCaseField).append(" = ")
                 .append(camelCaseField).append(";\n")
                 .append("    }\n\n");
-    }
-
-    private String toSingular(String part) {
-        if (part == null || part.isEmpty()) {
-            return part;
-        }
-
-        // Reglas básicas para convertir plurales a singular en español
-        if (part.endsWith("s")) {
-            // Casos especiales primero
-            if (part.endsWith("es")) {
-                // Palabras que terminan en -es
-                return part.substring(0, part.length() - 2);
-            }
-            // Caso general: quitar la 's' final
-            return part.substring(0, part.length() - 1);
-        }
-
-        return part;
     }
 
     public String toPlural(String input) {

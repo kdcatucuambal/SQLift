@@ -1,11 +1,9 @@
 package cl.playground.core.engine;
 
 import cl.playground.core.model.RelationMetadata;
-import cl.playground.core.model.TableMetadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
