@@ -10,11 +10,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ClassConstructorsGenertor {
+public class ClassConstructorsGenerator {
 
     private final boolean useLombok;
 
-    public ClassConstructorsGenertor(boolean useLombok) {
+    public ClassConstructorsGenerator(boolean useLombok) {
         this.useLombok = useLombok;
     }
 

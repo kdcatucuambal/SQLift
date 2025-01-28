@@ -2,12 +2,6 @@ package cl.playground.core.generator;
 
 import cl.playground.core.generator.factory.*;
 import cl.playground.core.model.TableMetadata;
-import cl.playground.core.model.ColumnMetadata;
-import cl.playground.core.model.RelationMetadata;
-import cl.playground.core.types.PostgreSQLToJavaType;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class EntityGenerator {
 
@@ -15,7 +9,7 @@ public class EntityGenerator {
     private final ImportGenerator importGenerator;
     private final ClassAnnotationGenerator classAnnotationGenerator;
     private final ClassCoreGenerator classCoreGenerator;
-    private final ClassConstructorsGenertor classConstructorsGenertor;
+    private final ClassConstructorsGenerator classConstructorsGenerator;
     private final ClassGetterAndSetterGenerator classGetterAndSetterGenerator;
     private final CompositeClassGenerator compositeClassGenerator;
 
@@ -23,7 +17,7 @@ public class EntityGenerator {
         this.useLombok = useLombok;
         this.importGenerator = new ImportGenerator(useLombok);
         this.classAnnotationGenerator = new ClassAnnotationGenerator(useLombok);
-        this.classConstructorsGenertor = new ClassConstructorsGenertor(useLombok);
+        this.classConstructorsGenerator = new ClassConstructorsGenerator(useLombok);
         this.classGetterAndSetterGenerator = new ClassGetterAndSetterGenerator(useLombok);
         this.compositeClassGenerator = new CompositeClassGenerator(useLombok);
         this.classCoreGenerator = new ClassCoreGenerator();
@@ -50,7 +44,7 @@ public class EntityGenerator {
         classCoreGenerator.generateFields(table, entityBuilder);
 
         // 5. Generar constructores
-        classConstructorsGenertor.generateConstructors(table, className, entityBuilder);
+        classConstructorsGenerator.generateConstructors(table, className, entityBuilder);
 
         // 6. Generar getters y setters
         classGetterAndSetterGenerator.generateGettersAndSetters(table, entityBuilder);
