@@ -26,7 +26,6 @@ class EntityGeneratorTest {
 
         String sqlContent = Files.readString(Path.of(resourceUrl.toURI()));
 
-        // El resto del código sigue igual...
         PostgresEngine engine = new PostgresEngine();
         SchemaProcessor schemaProcessor = new SchemaProcessor(engine);
         List<TableMetadata> tables = schemaProcessor.processSchema(sqlContent);

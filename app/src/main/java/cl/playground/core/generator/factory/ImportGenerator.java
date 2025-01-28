@@ -33,13 +33,13 @@ public class ImportGenerator {
             imports.add("import lombok.AllArgsConstructor;");
 
             // Solo añadir EqualsAndHashCode si se necesita una clase compuesta
-            if (needsCompositeKey(table)) {
+            if (UtilsFactory.needsCompositeKey(table)) {
                 imports.add("import lombok.EqualsAndHashCode;");
             }
         }
 
         // Otros imports relacionados con JPA según el esquema
-        if (needsCompositeKey(table)) {
+        if (UtilsFactory.needsCompositeKey(table)) {
             imports.add("import jakarta.persistence.EmbeddedId;");
             imports.add("import jakarta.persistence.Embeddable;");
             imports.add("import java.io.Serializable;");
@@ -56,7 +56,7 @@ public class ImportGenerator {
         boolean usesMapsId = table.getRelations().stream()
             .anyMatch(RelationMetadata::isManyToOne); // Si hay relaciones ManyToOne que usan @MapsId
 
-        if (usesMapsId && needsCompositeKey(table)) {
+        if (usesMapsId && UtilsFactory.needsCompositeKey(table)) {
             imports.add("import jakarta.persistence.MapsId;");
         }
 
@@ -87,9 +87,5 @@ public class ImportGenerator {
         // Ordenar y agregar imports al builder
         imports.stream().sorted().forEach(imp -> builder.append(imp).append("\n"));
         builder.append("\n");
-    }
-
-    private boolean needsCompositeKey(TableMetadata table) {
-        return table.getPrimaryKeys().size() > 1;
     }
 }

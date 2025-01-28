@@ -5,6 +5,7 @@ import cl.playground.config.reader.YamlReader;
 import cl.playground.core.engine.PostgresEngine;
 import cl.playground.core.engine.SchemaProcessor;
 import cl.playground.core.generator.EntityGenerator;
+import cl.playground.core.generator.factory.UtilsFactory;
 import cl.playground.core.model.TableMetadata;
 import cl.playground.exception.ConfigurationException;
 
@@ -40,7 +41,7 @@ public class GenerateCommand {
             String packageName = (String) context.get("outputPackage");
             for (TableMetadata table : tables) {
                 String entity = generator.generateEntity(table, packageName);
-                writeEntityFile(packageName, generator.generateClassName(table.getTableName()), entity);
+                writeEntityFile(packageName, UtilsFactory.generateClassName(table.getTableName()), entity);
             }
 
             System.out.println("✅ Entities generated successfully!");
