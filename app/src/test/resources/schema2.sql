@@ -1,7 +1,7 @@
 CREATE TABLE SUCURSAL (
     id SERIAL,
-    nombre VARCHAR(100) NOT NULL,
-    direccion VARCHAR(200) NOT NULL,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    direccion VARCHAR(200) NOT NULL UNIQUE,
     telefono VARCHAR(20),
     email VARCHAR(100),
     activo BOOLEAN DEFAULT TRUE,

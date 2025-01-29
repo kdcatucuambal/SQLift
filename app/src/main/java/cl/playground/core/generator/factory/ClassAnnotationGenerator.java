@@ -63,6 +63,7 @@ public class ClassAnnotationGenerator {
             .filter(ColumnMetadata::isUnique)
             .collect(Collectors.toList());
 
+        // Añadir restricciones de unicidad (uniqueConstraints)
         if (!uniqueColumns.isEmpty()) {
             builder.append(",\n    uniqueConstraints = {\n");
             for (int i = 0; i < uniqueColumns.size(); i++) {
@@ -84,6 +85,30 @@ public class ClassAnnotationGenerator {
             }
             builder.append("    }");
         }
+
+        // Añadir índices (indexes)
+        if (!uniqueColumns.isEmpty()) {
+            builder.append(",\n    indexes = {\n");
+            for (int i = 0; i < uniqueColumns.size(); i++) {
+                ColumnMetadata column = uniqueColumns.get(i);
+                builder.append("        @Index(\n")
+                    .append("            name = \"idx_")
+                    .append(tableName)
+                    .append("_")
+                    .append(column.getColumnName().toLowerCase())
+                    .append("\",\n")
+                    .append("            columnList = \"")
+                    .append(column.getColumnName())
+                    .append("\"\n")
+                    .append("        )");
+                if (i < uniqueColumns.size() - 1) {
+                    builder.append(",");
+                }
+                builder.append("\n");
+            }
+            builder.append("    }");
+        }
+
         builder.append(")\n");
     }
 }

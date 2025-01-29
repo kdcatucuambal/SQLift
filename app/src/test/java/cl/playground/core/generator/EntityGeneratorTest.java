@@ -30,7 +30,7 @@ class EntityGeneratorTest {
         SchemaProcessor schemaProcessor = new SchemaProcessor(engine);
         List<TableMetadata> tables = schemaProcessor.processSchema(sqlContent);
 
-        EntityGenerator entityGenerator = new EntityGenerator(false);
+        EntityGenerator entityGenerator = new EntityGenerator(true);
         String packageOutput = "cl.playground.alumnos.entities";
 
         tables.forEach(table -> {
