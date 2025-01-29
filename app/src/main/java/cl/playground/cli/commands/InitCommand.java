@@ -27,25 +27,74 @@ public class InitCommand {
 
     private void generateReadmeFile() {
         String readmeContent = """
-            # SQLift Generator
+                    # SQLift Generator
             
-            A tool to generate Java entity classes from SQL schema files.
+                    SQLift is a tool that generates Java entity classes from an SQL schema.
             
-            ## Configuration File Structure (sqlift.yaml)
+                    ## Configuration File Structure (sqlift.yml)
             
-            ```yaml
-            version: "1.0"
-            sql:
-              engine: "postgres"  # Motor de base de datos
-              schema: "schema.sql"  # Ruta al archivo de esquema SQL
-              output:
-                package: "com.example.project.target"  # Paquete base para las entidades
-                lombok: true  # Activar/desactivar anotaciones de Lombok
-            ```
+                    After running `sqlift init`, a `sqlift.yml` file will be created that needs to be configured. Here is an example of how it should look:
+            
+                    ```yaml
+                    version: "1.0"
+                    sql:
+                      engine: "postgres"  # Database engine (only postgres supported at the moment)
+                      schema: "schema.sql"  # Path to the SQL schema file
+                      output:
+                        package: "com.example.project.target"  # Base package for the generated entities
+                        lombok: true  # Enable/disable Lombok annotations
+                    ```
+            
+                    **Field descriptions**:
+                    - `engine`: Defines the database engine (e.g., `postgres`, `mysql`).
+                    - `schema`: Path to the `.sql` file containing the database schema.
+                    - `output`: Defines the package where the Java entities will be generated and whether Lombok annotations are enabled.
+            
+                    ## SQL Schema Structure
+            
+                    For SQLift to work properly, the SQL schema must have the relationships between tables defined within the `CREATE TABLE` statements, not through `ALTER TABLE` commands.
+            
+                    Here is an example of a compatible SQL schema:
+            
+                    ```sql
+                    CREATE TABLE branches (
+                        id BIGINT PRIMARY KEY,
+                        name VARCHAR(100) NOT NULL,
+                        address VARCHAR(200) NOT NULL,
+                        phone VARCHAR(20),
+                        email VARCHAR(100),
+                        active BOOLEAN DEFAULT TRUE
+                    );
+            
+                    CREATE TABLE branch_stock (
+                        id BIGINT PRIMARY KEY,
+                        quantity INT NOT NULL,
+                        branch_id BIGINT,
+                        FOREIGN KEY (branch_id) REFERENCES branches(id)
+                    );
+            
+                    CREATE TABLE movements (
+                        id BIGINT PRIMARY KEY,
+                        movement_type VARCHAR(50) NOT NULL,
+                        origin_branch_id BIGINT,
+                        destination_branch_id BIGINT,
+                        FOREIGN KEY (origin_branch_id) REFERENCES branches(id),
+                        FOREIGN KEY (destination_branch_id) REFERENCES branches(id)
+                    );
+                    ```
+            
+                    **Important points**:
+                    - Relationships between tables must be defined within the `CREATE TABLE` statement, as shown in the examples above.
+                    - Be sure to use foreign keys (`FOREIGN KEY`) in the appropriate place to establish relationships between tables.
+            
+                    With this configuration and the correct schema, you can run `sqlift generate` to generate the corresponding Java entity classes.
+            
+                    Ready to get started!
             """;
 
         writeToFile("sqlift.md", readmeContent);
     }
+
 
     private void writeToFile(String fileName, String content) {
         try {

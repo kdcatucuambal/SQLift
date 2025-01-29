@@ -7,9 +7,11 @@ import cl.playground.core.engine.SchemaProcessor;
 import cl.playground.core.generator.EntityGenerator;
 import cl.playground.core.generator.factory.UtilsFactory;
 import cl.playground.core.model.TableMetadata;
+import cl.playground.core.reader.SqlReader;
 import cl.playground.exception.ConfigurationException;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,7 +32,7 @@ public class GenerateCommand {
             }
 
             Map<String, Object> context = extractConfigContext(yamlFile.getPath());
-            String sqlContent = cl.playground.core.reader.SqlReader.readSql((String) context.get("schema"));
+            String sqlContent = SqlReader.readSql((String) context.get("schema"));
             context.put("sqlContent", sqlContent);
 
             PostgresEngine engine = new PostgresEngine();
@@ -78,8 +80,13 @@ public class GenerateCommand {
 
     private void writeEntityFile(String packageName, String className, String content) throws Exception {
         String packagePath = packageName.replace('.', '/');
-        Path directory = Paths.get("src/main/java", packagePath);
+        Path directory = Paths.get("src/main/java".replace("/", File.separator),
+            packagePath.replace("/", File.separator));
+
         Files.createDirectories(directory);
         Files.writeString(directory.resolve(className + ".java"), content);
+        if (!Files.isWritable(directory)) {
+            throw new IOException("Write permission denied for: " + directory);
+        }
     }
 }

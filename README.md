@@ -1,72 +1,85 @@
 # SQLift
 
-## Pagina Oficial
+## Official Page
 
-[SQLift](https://andressep95.github.io/sqlift-install) - ¡No olvides dejar tu ⭐ y reportar issues!
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/andressep95/sqlift-install)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/andressep95/sqlift-install/blob/main/LICENSE)
 
-## Introducción
+[SQLift](https://andressep95.github.io/sqlift-install) - Don’t forget to leave your ⭐ and report issues!
 
-SQLift es una herramienta que facilita el mapeo de consultas SQL a objetos Java. Puedes instalarla y utilizarla de dos
-formas: mediante un instalador nativo o usando Docker.
+## Introduction
 
-## Métodos de Instalación
+SQLift is a tool that simplifies mapping SQL queries to Java objects. You can install and use it in two ways: through a
+native installer or by using Docker.
 
-### 1. Instalador Nativo
+## Supported Architectures
 
-Este método instala SQLift directamente en tu sistema, permitiendo un uso más simple de los comandos.
+### Native Executables
 
-#### Requisitos
+| Operating System | Architecture | Status  |
+|------------------|--------------|---------|
+| macOS            | ARM64        | ✅       |
+| macOS            | AMD64        | ✅       |
+| Linux            | AMD64        | ✅       |
+| Windows          | Any          | ⚠️ Only via Docker |
 
-- macOS (Apple Silicon o Intel) o Linux
-- Acceso a terminal con permisos de instalación
+## Installation Methods
 
-#### Pasos de Instalación
+### 1. Native Installer
 
-**Para macOS:**
+This method installs SQLift directly on your system, providing a simpler usage of commands.
+
+#### Requirements
+
+- macOS (Apple Silicon or Intel) or Linux
+- Access to terminal with installation permissions
+
+#### Installation Steps
+
+**For macOS:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/andressep95/sqlift-install/main/macos-install.sh | bash
 ```
 
-**Para Linux:**
+**For Linux:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/andressep95/sqlift-install/main/linux-install.sh | bash
 ```
 
-El instalador:
+The installer:
 
-- Descarga el binario correspondiente a tu sistema
-- Lo instala en `~/.sqlift`
-- Lo agrega a tu `PATH`
+- Downloads the binary for your system
+- Installs it in ~/.sqlift
+- Adds it to your PATH
 
-#### Verificación
+#### Verification
 
 ```bash
 sqlift --version
 ```
 
-#### Comandos Básicos
+#### Basic Commands
 
 ```bash
-sqlift init        # Inicializa la configuración
-sqlift generate    # Genera las entidades
+sqlift init        # Initialize the configuration
+sqlift generate    # Generate the entities
 ```
 
-### 2. Usando Docker
+### 2. Using Docker
 
-Este método requiere Docker instalado pero ofrece mayor portabilidad.
+This method requires Docker to be installed, but offers greater portability.
 
-#### Requisitos
+#### Requirements
 
-- Docker instalado y en ejecución
-- Permisos para ejecutar comandos Docker
-
+- Docker installed and running
+- Permissions to run Docker commands
 ---
 
-### **Pasos de Instalación y Uso**
+### **Installation and Usage Steps**
 
-#### **1. Descargar la imagen**
+#### **1. Download the image**
 
 ```bash
 docker pull ghcr.io/andressep95/sqlift-cli:latest
@@ -76,19 +89,19 @@ docker pull ghcr.io/andressep95/sqlift-cli:latest
 
 ### **Linux/macOS**
 
-#### **Inicializar configuración**
+#### **Initialize configuration**
 
 ```bash
 docker run --rm -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest init /workspace
 ```
 
-#### **Generar entidades**
+#### **Generate entities**
 
 ```bash
 docker run --rm -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest generate /workspace
 ```
 
-#### **Modo interactivo**
+#### **Interactive mode**
 
 ```bash
 docker run -it -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest
@@ -98,50 +111,64 @@ docker run -it -v $(pwd):/workspace ghcr.io/andressep95/sqlift-cli:latest
 
 ### **Windows (PowerShell)**
 
-#### **Inicializar configuración**
+#### **Initialize configuration**
 
 ```bash
 docker run --rm -v ${PWD}:/workspace ghcr.io/andressep95/sqlift-cli:latest init /workspace
 ```
 
-#### **Generar entidades**
+#### **Generate entities**
 
 ```bash
 docker run --rm -v ${PWD}:/workspace ghcr.io/andressep95/sqlift-cli:latest generate /workspace
 ```
 
-#### **Modo interactivo**
+#### **Interactive mode**
 
 ```bash
 docker run -it -v ${PWD}:/workspace ghcr.io/andressep95/sqlift-cli:latest
 ``` 
 
-## Configuración (Común para ambos métodos)
+## Configuration (Common for both methods)
 
-Después de la instalación, deberás configurar SQLift mediante el archivo `sqlift.yml`:
+After installation, you need to configure SQLift using the sqlift.yml file:
 
 ```yaml
 version: "1.0"
 sql:
-  engine: "postgres"  # Motor de base de datos
-  schema: "schema.sql"  # Ruta al archivo de esquema SQL
+  engine: "postgres"  # Database engine
+  schema: "schema.sql"  # Path to the SQL schema file
   output:
-    package: "cl.playground.projectname.target"  # Paquete base para las entidades
-    lombok: true  # Activar/desactivar anotaciones de Lombok
+    package: "cl.playground.projectname.target"  # Base package for the entities
+    lombok: true  # Enable/disable Lombok annotations
 ```
 
-## Características Soportadas
+## Required Schema Structure
 
-### Motores de Base de Datos
+```sql
+CREATE TABLE sucursales (
+    id BIGINT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    direccion VARCHAR(200) NOT NULL,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
+    activo BOOLEAN DEFAULT TRUE
+);
 
-- PostgreSQL ✅
-- MySQL (Próximamente)
-- Oracle (Próximamente)
-- SQL Server (Próximamente)
+CREATE TABLE stock_sucursales (
+    id BIGINT PRIMARY KEY,
+    cantidad INT NOT NULL,
+    sucursal_id BIGINT,
+    FOREIGN KEY (sucursal_id) REFERENCES sucursales(id)
+);
 
-### Generación de Código
+CREATE TABLE movimientos (
+    id BIGINT PRIMARY KEY,
+    tipo_movimiento VARCHAR(50) NOT NULL,
+    sucursal_origen_id BIGINT,
+    sucursal_destino_id BIGINT,
+    FOREIGN KEY (sucursal_origen_id) REFERENCES sucursales(id),
+    FOREIGN KEY (sucursal_destino_id) REFERENCES sucursales(id)
+);
 
-- Anotaciones Lombok (@Data, @Getter, @Setter)
-- Anotaciones JPA:
-    - Jakarta EE (@Entity, @Table, @Column)
-    - Java EE (javax.persistence.*)
+``` 
